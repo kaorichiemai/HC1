@@ -2,8 +2,9 @@ import 'dotenv/config';
 import { createClient } from '@libsql/client';
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { verifyToken } from '@clerk/backend';
 
-type ApiRequest = IncomingMessage & { body?: unknown };
+type ApiRequest = IncomingMessage & { body?: unknown; headers: IncomingMessage['headers'] & { authorization?: string } };
 type ApiResponse = ServerResponse & {
   status: (code: number) => ApiResponse;
   json: (body: unknown) => void;
@@ -106,8 +107,18 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     return response.status(500).json({ error: 'Database initialization failed.' });
   }
 
-  const ownerUid = text(request.headers['x-user-id'], 128);
-  if (!ownerUid) return response.status(401).json({ error: 'Firebase user ID is required.' });
+  const authorization = text(request.headers.authorization, 2000);
+  const token = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
+  if (!token) return response.status(401).json({ error: 'Clerk authentication is required.' });
+  let ownerUid = '';
+  try {
+    const secretKey = process.env.CLERK_SECRET_KEY;
+    if (!secretKey) throw new Error('CLERK_SECRET_KEY is not configured.');
+    const decoded = await verifyToken(token, { secretKey });
+    ownerUid = decoded.sub;
+  } catch {
+    return response.status(401).json({ error: 'Clerk authentication could not be verified.' });
+  }
 
   if (request.method === 'GET') {
     const resource = text(request.headers['x-resource'], 40);

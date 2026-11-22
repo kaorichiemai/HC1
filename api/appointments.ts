@@ -2,8 +2,7 @@ import 'dotenv/config';
 import { createClient } from '@libsql/client';
 import { randomBytes, randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { applicationDefault, cert, getApps, initializeApp } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
+import { verifyToken } from '@clerk/backend';
 import { ensureSiteContent, getContentDatabase } from './site-content-store.js';
 
 type ApiRequest = IncomingMessage & { body?: unknown; headers: IncomingMessage['headers'] & { authorization?: string } };
@@ -29,24 +28,16 @@ function text(value: unknown, limit: number) {
   return typeof value === 'string' ? value.trim().slice(0, limit) : '';
 }
 
-function getFirebaseAdmin() {
-  if (getApps().length > 0) return getAuth();
-  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-  const credential = serviceAccountJson
-    ? cert(JSON.parse(serviceAccountJson))
-    : applicationDefault();
-  initializeApp({ credential });
-  return getAuth();
-}
-
 async function authenticate(request: ApiRequest) {
   const authorization = text(request.headers.authorization, 2000);
   const token = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
   if (!token) return null;
   try {
-    return await getFirebaseAdmin().verifyIdToken(token);
+    const secretKey = process.env.CLERK_SECRET_KEY;
+    if (!secretKey) throw new Error('CLERK_SECRET_KEY is not configured.');
+    return await verifyToken(token, { secretKey });
   } catch (error) {
-    console.error('Appointment API Firebase ID token verification failed:', error);
+    console.error('Appointment API Clerk session verification failed:', error);
     return null;
   }
 }
@@ -144,7 +135,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       if (decoded) {
         const appointments = await db.execute({
           sql: `SELECT * FROM appointment_requests WHERE owner_uid = ? ORDER BY preferred_date ASC, preferred_time ASC`,
-          args: [decoded.uid],
+          args: [decoded.sub],
         });
         return response.status(200).json({ slots, slotSettings, appointments: appointments.rows });
       }
@@ -165,7 +156,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   }
   const decoded = await authenticate(request);
   if (!decoded) {
-    return response.status(401).json({ error: 'Your sign-in could not be verified for this Firebase project.' });
+    return response.status(401).json({ error: 'Your Clerk sign-in could not be verified.' });
   }
 
   const body = request.body && typeof request.body === 'object'
@@ -178,7 +169,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   const serviceId = text(body.serviceId, 40);
   const preferredDate = text(body.preferredDate, 10);
   const preferredTime = text(body.preferredTime, 30);
-  const ownerUid = decoded.uid;
+  const ownerUid = decoded.sub;
 
   if (body.action === 'cancel') {
     const referenceCode = text(body.referenceCode, 80);

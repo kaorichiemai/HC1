@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useState, useEffect } from 'react';
-import { auth } from '../firebase';
+import { useAuth } from '@clerk/react';
 import {
   Language,
   AppointmentBooking,
@@ -54,6 +54,7 @@ interface HealthCenterContextType {
 const HealthCenterContext = createContext<HealthCenterContextType | undefined>(undefined);
 
 export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { getToken } = useAuth();
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem('mfhc_language');
     return (saved === 'fil' || saved === 'en') ? saved : 'en';
@@ -106,7 +107,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const markAppointmentRequestPending = useCallback(() => {
     setAppointmentRequestAvailability('pending');
-  }, []);
+  }, [getToken]);
 
   useEffect(() => {
     let active = true;
@@ -115,12 +116,8 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (loading || document.visibilityState === 'hidden') return;
       loading = true;
       try {
-        const user = auth.currentUser;
-        if (!user) {
-          if (active) setAppointmentRequestAvailability('error');
-          return;
-        }
-        const token = await user.getIdToken();
+        const token = await getToken();
+        if (!token) throw new Error("Clerk sign-in is required.");
         const response = await fetch('/api/appointments', {
           headers: { Authorization: `Bearer ${token}` },
           cache: 'no-store',
@@ -156,7 +153,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       window.clearInterval(timer);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, []);
+  }, [getToken]);
 
   useEffect(() => {
     let active = true;
@@ -165,9 +162,8 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (loading || document.visibilityState === 'hidden') return;
       loading = true;
       try {
-        const user = auth.currentUser;
-        if (!user) return;
-        const token = await user.getIdToken();
+        const token = await getToken();
+        if (!token) throw new Error("Clerk sign-in is required.");
         const response = await fetch('/api/admin?mode=clinic_status', {
           headers: { Authorization: `Bearer ${token}` },
           cache: 'no-store',
@@ -197,7 +193,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       window.clearInterval(timer);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, []);
+  }, [getToken]);
 
   useEffect(() => {
     let active = true;
@@ -236,9 +232,8 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   const refreshUnreadAdminMessages = useCallback(async () => {
-    const user = auth.currentUser;
-    if (!user) return;
-    const token = await user.getIdToken();
+    const token = await getToken();
+    if (!token) throw new Error("Clerk sign-in is required.");
     const response = await fetch('/api/admin?mode=unread_messages', {
       headers: { Authorization: `Bearer ${token}` },
       cache: 'no-store',
@@ -249,12 +244,11 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
     setUnreadAdminMessageCount(result.unreadCount);
     setUnreadMessagesError('');
-  }, []);
+  }, [getToken]);
 
   const markAppointmentMessagesRead = useCallback(async (appointmentId: string) => {
-    const user = auth.currentUser;
-    if (!user) throw new Error('Sign in to view appointment messages.');
-    const token = await user.getIdToken();
+    const token = await getToken();
+    if (!token) throw new Error("Clerk sign-in is required.");
     const response = await fetch('/api/admin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -263,7 +257,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const result = await response.json() as { error?: string };
     if (!response.ok) throw new Error(result.error || 'Messages could not be marked as read.');
     await refreshUnreadAdminMessages();
-  }, [refreshUnreadAdminMessages]);
+  }, [getToken, refreshUnreadAdminMessages]);
 
   useEffect(() => {
     let active = true;
@@ -284,15 +278,13 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [refreshUnreadAdminMessages]);
 
   useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) return;
-
     const loadData = async () => {
       try {
-        const token = await user.getIdToken();
+        const token = await getToken();
+        if (!token) throw new Error("Clerk sign-in is required.");
         const [patientsResponse, contactsResponse, appointmentsResponse] = await Promise.all([
-          fetch('/api/health-data', { headers: { 'x-user-id': user.uid, 'x-resource': 'patients' } }),
-          fetch('/api/health-data', { headers: { 'x-user-id': user.uid, 'x-resource': 'contacts' } }),
+          fetch('/api/health-data', { headers: { Authorization: `Bearer ${token}`, 'x-resource': 'patients' } }),
+          fetch('/api/health-data', { headers: { Authorization: `Bearer ${token}`, 'x-resource': 'contacts' } }),
           fetch('/api/appointments', { headers: { Authorization: `Bearer ${token}` } }),
         ]);
         if (appointmentsResponse.ok) {
@@ -371,6 +363,16 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const t = translations[language];
 
+  const authorizedPost = async (url: string, body: unknown) => {
+    const token = await getToken();
+    if (!token) throw new Error('Clerk sign-in is required.');
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+  };
+
   const bookAppointment = (data: Omit<AppointmentBooking, 'id' | 'referenceCode' | 'status' | 'createdAt'>): AppointmentBooking => {
     const refCode = `MFHC-${Math.floor(1000 + Math.random() * 9000)}`;
     const newAppointment: AppointmentBooking = {
@@ -381,10 +383,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       createdAt: new Date().toISOString()
     };
 
-    void fetch('/api/appointments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': auth.currentUser?.uid ?? '' },
-      body: JSON.stringify({
+    void authorizedPost('/api/appointments', {
         patientName: newAppointment.patientName,
         phone: newAppointment.contactNumber,
         email: newAppointment.email,
@@ -393,8 +392,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
         preferredDate: newAppointment.appointmentDate,
         preferredTime: newAppointment.timeSlot,
         privacyConsent: true,
-      }),
-    }).catch(() => setNotificationToast('Appointment could not be saved to the database.'));
+      }).catch(() => setNotificationToast('Appointment could not be saved to the database.'));
 
     setAppointments(prev => [newAppointment, ...prev]);
     setNotificationToast(
@@ -408,11 +406,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const cancelAppointment = (id: string) => {
     const appointment = appointments.find((item) => item.id === id);
     if (!appointment) return;
-    void fetch('/api/appointments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': auth.currentUser?.uid ?? '' },
-      body: JSON.stringify({ action: 'cancel', referenceCode: appointment.referenceCode }),
-    }).then((response) => {
+    void authorizedPost('/api/appointments', { action: 'cancel', referenceCode: appointment.referenceCode }).then((response) => {
       if (!response.ok) throw new Error('Appointment could not be cancelled.');
       setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'Cancelled' as const } : a));
       setNotificationToast(language === 'fil' ? 'Kinansela ang iskedyul.' : 'Appointment cancelled.');
@@ -430,11 +424,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       radiologyReports: []
     };
 
-    void fetch('/api/health-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': auth.currentUser?.uid ?? 'anonymous' },
-      body: JSON.stringify({ resource: 'patient', ...newPatient, patientNumber: patNo }),
-    }).then((response) => {
+    void authorizedPost('/api/health-data', { resource: 'patient', ...newPatient, patientNumber: patNo }).then((response) => {
       if (!response.ok) throw new Error('Patient record could not be saved.');
       setPatientRecords(prev => [newPatient, ...prev]);
       setActivePatientState(newPatient);
@@ -459,11 +449,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       recordedBy: 'Nurse / Triage Desk'
     };
 
-    void fetch('/api/health-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': auth.currentUser?.uid ?? 'anonymous' },
-      body: JSON.stringify({ resource: 'vital', patientId, ...entry }),
-    }).catch(() => setNotificationToast('Vitals could not be saved to the database.'));
+    void authorizedPost('/api/health-data', { resource: 'vital', patientId, ...entry }).catch(() => setNotificationToast('Vitals could not be saved to the database.'));
 
     setPatientRecords(prev => prev.map(p => {
       if (p.id === patientId) {
@@ -494,11 +480,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       prescribedBy: 'Tiffany Almuros (Head of Doctors)'
     };
 
-    void fetch('/api/health-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': auth.currentUser?.uid ?? 'anonymous' },
-      body: JSON.stringify({ resource: 'prescription', patientId, ...entry }),
-    }).catch(() => setNotificationToast('Prescription could not be saved to the database.'));
+    void authorizedPost('/api/health-data', { resource: 'prescription', patientId, ...entry }).catch(() => setNotificationToast('Prescription could not be saved to the database.'));
 
     setPatientRecords(prev => prev.map(p => {
       if (p.id === patientId) {
@@ -536,11 +518,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const updated = [...(chatStore[patientId] || []), newMsg];
     setChatStore(prev => ({ ...prev, [patientId]: updated }));
-    void fetch('/api/health-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': auth.currentUser?.uid ?? 'anonymous' },
-      body: JSON.stringify({ resource: 'message', patientId, sender: newMsg.sender, senderName: newMsg.senderName, senderRole: '', message: newMsg.text }),
-    }).catch(() => setNotificationToast('Message could not be saved to the database.'));
+    void authorizedPost('/api/health-data', { resource: 'message', patientId, sender: newMsg.sender, senderName: newMsg.senderName, senderRole: '', message: newMsg.text }).catch(() => setNotificationToast('Message could not be saved to the database.'));
 
     setTimeout(() => {
       const botReply: ChatMessage = {
@@ -570,11 +548,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       status: 'Received'
     };
 
-    void fetch('/api/health-data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-user-id': auth.currentUser?.uid ?? 'anonymous' },
-      body: JSON.stringify({ resource: 'contact', ...newSubmission, ticketId: newSubmission.ticketId }),
-    }).then((response) => {
+    void authorizedPost('/api/health-data', { resource: 'contact', ...newSubmission, ticketId: newSubmission.ticketId }).then((response) => {
       if (!response.ok) throw new Error('Inquiry could not be saved.');
       setContactSubmissions(prev => [newSubmission, ...prev]);
       setNotificationToast(

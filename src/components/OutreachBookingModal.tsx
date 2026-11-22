@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { AlertCircle, CalendarDays, CheckCircle2, Clock, X } from 'lucide-react';
-import type { User } from 'firebase/auth';
+import { useAuth } from '@clerk/react';
 
 interface AppointmentReceipt {
   referenceCode: string;
@@ -30,7 +30,8 @@ function localDateString() {
   }).format(new Date());
 }
 
-export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
+export const OutreachBookingModal: React.FC = () => {
+  const { getToken } = useAuth();
   const {
     t,
     language,
@@ -92,7 +93,8 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
     let active = true;
     const loadAvailability = async () => {
       try {
-        const token = await user.getIdToken();
+        const token = await getToken();
+        if (!token) throw new Error('Sign in to view appointment availability.');
         const response = await fetch('/api/appointments', {
           headers: { Authorization: `Bearer ${token}` },
           cache: 'no-store',
@@ -129,7 +131,7 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
       active = false;
       window.clearInterval(timer);
     };
-  }, [bookingModalOpen, user]);
+  }, [bookingModalOpen, getToken]);
 
   if (!bookingModalOpen) return null;
 
@@ -177,7 +179,8 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
     setSubmitting(true);
 
     try {
-      const token = await user.getIdToken();
+      const token = await getToken();
+      if (!token) throw new Error('Sign in to submit an appointment.');
       const response = await fetch('/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -211,7 +214,7 @@ export const OutreachBookingModal: React.FC<{ user: User }> = ({ user }) => {
           markAppointmentRequestPending();
         }
         const message = response.status === 401
-          ? 'Your sign-in could not be verified. Check that the Firebase service account in Vercel belongs to this app’s Firebase project, then redeploy.'
+          ? 'Your sign-in could not be verified. Check the Clerk environment variables in Vercel, then redeploy.'
           : result.error || 'Could not submit your appointment request.';
         throw new Error(message);
       }
