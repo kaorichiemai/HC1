@@ -16,7 +16,7 @@ import { UserAppointmentChat } from './components/UserAppointmentChat';
 import { LegalPage } from './components/LegalPage';
 import patientFlowDiagram from './assets/images/DIAGRAM xd.png';
 
-const AppContent: React.FC<{ user: ReturnType<typeof useUser>['user'] }> = ({ user }) => {
+const AppContent: React.FC = () => {
   const { activeSection, notificationToast, setNotificationToast, appointmentRequestAvailability, language } = useHealthCenter();
 
   useEffect(() => {
@@ -98,6 +98,8 @@ export default function App() {
     : pathname === '/terms-of-service'
       ? 'terms'
       : null;
+  const isSignInPage = pathname === '/sign-in';
+  const isAdminPage = pathname === '/admin';
   const [accountRole, setAccountRole] = useState<'checking' | 'admin' | 'user' | 'error'>('checking');
   const [roleError, setRoleError] = useState('');
 
@@ -142,7 +144,7 @@ export default function App() {
 
   if (legalPage) return <LegalPage page={legalPage} />;
 
-  if (!isLoaded) {
+  if (!isLoaded && (isSignInPage || isAdminPage)) {
     return (
       <main className="flex min-h-dvh items-center justify-center bg-[#eef2ee] text-sm font-bold text-[#173a37]">
         Loading...
@@ -150,9 +152,17 @@ export default function App() {
     );
   }
 
-  if (!isSignedIn || !user) return <AuthScreen />;
+  if (isLoaded && !isSignedIn && (isSignInPage || isAdminPage)) return <AuthScreen />;
 
-  if (accountRole === 'checking') {
+  if (isSignedIn && !user) {
+    return (
+      <main className="flex min-h-dvh items-center justify-center bg-[#eef2ee] text-sm font-bold text-[#173a37]">
+        Loading...
+      </main>
+    );
+  }
+
+  if (isSignedIn && accountRole === 'checking') {
     return (
       <main className="flex min-h-dvh items-center justify-center bg-[#eef2ee] text-sm font-bold text-[#173a37]">
         Checking account access...
@@ -160,7 +170,7 @@ export default function App() {
     );
   }
 
-  if (accountRole === 'error') {
+  if (isSignedIn && accountRole === 'error') {
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[#eef2ee] px-5 text-center text-[#173a37]">
         <p role="alert" className="max-w-md text-sm">{roleError}</p>
@@ -169,11 +179,11 @@ export default function App() {
     );
   }
 
-  if (accountRole === 'admin') return <AdminPanel />;
+  if (isSignedIn && accountRole === 'admin') return <AdminPanel />;
 
   return (
     <HealthCenterProvider>
-      <AppContent user={user} />
+      <AppContent />
     </HealthCenterProvider>
   );
 }

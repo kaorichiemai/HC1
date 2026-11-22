@@ -77,6 +77,7 @@ export const AuthScreen: React.FC = () => {
             </button>
           </div>
           <nav aria-label="Legal" className="mt-4 flex justify-center gap-4 text-xs text-zinc-400">
+            <a href="/" className="underline underline-offset-2 hover:text-white">Home</a>
             <a href="/privacy-policy" className="underline underline-offset-2 hover:text-white">Privacy Policy</a>
             <a href="/terms-of-service" className="underline underline-offset-2 hover:text-white">Terms of Service</a>
           </nav>

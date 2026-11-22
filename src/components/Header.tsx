@@ -5,7 +5,7 @@ import centerPhoto from '../assets/images/MR FLORES.png';
 import { useAuth } from '@clerk/react';
 
 export const Header: React.FC = () => {
-  const { signOut } = useAuth();
+  const { isSignedIn, signOut } = useAuth();
   const {
     t,
     language,
@@ -77,16 +77,23 @@ export const Header: React.FC = () => {
               <CalendarDays className="w-4 h-4" />
               <span>REQUEST AN APPOINTMENT</span>
             </button>}
-            <button type="button" onClick={() => setMessagesOpen(true)} className="relative p-2 text-[#4b5563] hover:bg-[#eaf3ee] hover:text-[#0f4d3c]" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
-              <Mail className="h-5 w-5" />
-              {unreadAdminMessageCount > 0 && <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white">{unreadAdminMessageCount > 99 ? '99+' : unreadAdminMessageCount}</span>}
-            </button>
-            <button type="button" onClick={() => void signOut()} className="p-2 text-[#4b5563] hover:text-[#0f4d3c]" aria-label="Sign out" title="Sign out">
-              <LogOut className="w-4 h-4" />
-            </button>
+            {isSignedIn ? (
+              <>
+                <button type="button" onClick={() => setMessagesOpen(true)} className="relative p-2 text-[#4b5563] hover:bg-[#eaf3ee] hover:text-[#0f4d3c]" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
+                  <Mail className="h-5 w-5" />
+                  {unreadAdminMessageCount > 0 && <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white">{unreadAdminMessageCount > 99 ? '99+' : unreadAdminMessageCount}</span>}
+                </button>
+                <button type="button" onClick={() => void signOut()} className="p-2 text-[#4b5563] hover:text-[#0f4d3c]" aria-label="Sign out" title="Sign out">
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </>
+            ) : (
+              <a href="/sign-in" className="px-4 py-2 text-sm font-bold text-[#0f4d3c] hover:bg-[#eaf3ee]">Sign in</a>
+            )}
           </div>
 
           <div className="flex items-center gap-1 xl:hidden sm:gap-2">
+            {!isSignedIn && <a href="/sign-in" className="px-2 py-2 text-xs font-bold text-[#0f4d3c] hover:bg-[#eaf3ee] sm:px-3 sm:text-sm">Sign in</a>}
             <button
               onClick={toggleLanguage}
               className="flex h-11 w-11 items-center justify-center text-[#4b5563] hover:text-[#0f4d3c] xl:hidden"
@@ -95,10 +102,10 @@ export const Header: React.FC = () => {
             >
               <Globe className="w-5 h-5" />
             </button>
-            <button type="button" onClick={() => setMessagesOpen(true)} className="relative flex h-11 w-11 items-center justify-center text-[#4b5563] hover:text-[#0f4d3c] xl:hidden" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
+            {isSignedIn && <button type="button" onClick={() => setMessagesOpen(true)} className="relative flex h-11 w-11 items-center justify-center text-[#4b5563] hover:text-[#0f4d3c] xl:hidden" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
               <Mail className="h-5 w-5" />
               {unreadAdminMessageCount > 0 && <span aria-hidden="true" className="absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white">{unreadAdminMessageCount > 99 ? '99+' : unreadAdminMessageCount}</span>}
-            </button>
+            </button>}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="flex h-11 w-11 items-center justify-center rounded-md text-[#4b5563] hover:bg-[#eaf3ee] hover:text-[#0f4d3c]"
@@ -142,10 +149,16 @@ export const Header: React.FC = () => {
               <CalendarDays className="w-4 h-4" />
               <span>REQUEST AN APPOINTMENT</span>
             </button>}
-            <button type="button" onClick={() => void signOut()} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-[#dce7e1] px-4 text-sm font-semibold text-[#4b5563] hover:bg-[#f8faf9]">
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </button>
+            {isSignedIn ? (
+              <button type="button" onClick={() => void signOut()} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-[#dce7e1] px-4 text-sm font-semibold text-[#4b5563] hover:bg-[#f8faf9]">
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
+            ) : (
+              <a href="/sign-in" className="mt-2 flex min-h-11 w-full items-center justify-center rounded-md border border-[#dce7e1] px-4 text-sm font-semibold text-[#0f4d3c] hover:bg-[#f8faf9]">
+                Sign in to your account
+              </a>
+            )}
           </div>
         </div>
       )}

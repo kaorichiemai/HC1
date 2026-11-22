@@ -54,7 +54,7 @@ interface HealthCenterContextType {
 const HealthCenterContext = createContext<HealthCenterContextType | undefined>(undefined);
 
 export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem('mfhc_language');
     return (saved === 'fil' || saved === 'en') ? saved : 'en';
@@ -110,6 +110,10 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [getToken]);
 
   useEffect(() => {
+    if (!isSignedIn) {
+      setAppointmentRequestAvailability('checking');
+      return;
+    }
     let active = true;
     let loading = false;
     const refreshAppointmentRequestAvailability = async () => {
@@ -153,9 +157,10 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       window.clearInterval(timer);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   useEffect(() => {
+    if (!isSignedIn) return;
     let active = true;
     let loading = false;
     const loadClinicStatus = async () => {
@@ -193,7 +198,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       window.clearInterval(timer);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   useEffect(() => {
     let active = true;
@@ -232,6 +237,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   const refreshUnreadAdminMessages = useCallback(async () => {
+    if (!isSignedIn) return;
     const token = await getToken();
     if (!token) throw new Error("Clerk sign-in is required.");
     const response = await fetch('/api/admin?mode=unread_messages', {
@@ -244,7 +250,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
     setUnreadAdminMessageCount(result.unreadCount);
     setUnreadMessagesError('');
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   const markAppointmentMessagesRead = useCallback(async (appointmentId: string) => {
     const token = await getToken();
@@ -278,6 +284,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [refreshUnreadAdminMessages]);
 
   useEffect(() => {
+    if (!isSignedIn) return;
     const loadData = async () => {
       try {
         const token = await getToken();
@@ -343,7 +350,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
     };
     void loadData();
-  }, []);
+  }, [getToken, isSignedIn]);
 
 
   useEffect(() => {

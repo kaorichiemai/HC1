@@ -6,6 +6,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/sign-in", "destination": "/" },
     { "source": "/privacy-policy", "destination": "/" },
     { "source": "/terms-of-service", "destination": "/" }
   ]
