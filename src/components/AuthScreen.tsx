@@ -32,11 +32,17 @@ export const AuthScreen: React.FC = () => {
     ...signUpAppearance,
     elements: {
       ...signUpAppearance.elements,
-      headerTitle: 'text-center text-white',
-      headerSubtitle: 'text-center text-zinc-400',
+      headerTitle: '!text-center !text-white',
+      headerSubtitle: '!text-center !text-zinc-300',
+      formFieldLabel: '!text-zinc-100',
+      formFieldHintText: '!text-zinc-300',
+      formFieldErrorText: '!text-rose-300',
+      identityPreviewText: '!text-zinc-100',
+      dividerText: '!text-zinc-300',
       socialButtonsBlockButton: 'border border-zinc-700 text-zinc-100 hover:bg-zinc-800',
       dividerLine: 'bg-zinc-700',
-      dividerText: 'text-zinc-400',
+      footerActionText: '!text-zinc-300',
+      footerActionLink: '!text-purple-300 hover:!text-purple-200',
     },
   };
 
