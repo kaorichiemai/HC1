@@ -12,7 +12,13 @@ if (!publishableKey) {
 }
 
 createRoot(document.getElementById('root')!).render(
-  <ClerkProvider publishableKey={publishableKey}>
+  <ClerkProvider
+    publishableKey={publishableKey}
+    localization={{ signIn: { start: {
+      title: 'Sign in to Health Center',
+      titleCombined: 'Sign in to Health Center',
+    } } }}
+  >
     <App />
   </ClerkProvider>,
 );
