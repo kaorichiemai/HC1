@@ -131,9 +131,10 @@ function isAdmin(decoded: Awaited<ReturnType<typeof authenticate>>) {
   if ((decoded as unknown as { role?: string }).role === 'admin') return true;
   const metadata = (decoded as unknown as { public_metadata?: { role?: string }; metadata?: { role?: string } });
   if (metadata.public_metadata?.role === 'admin' || metadata.metadata?.role === 'admin') return true;
-  const allowedUid = process.env.ADMIN_USER_IDS?.split(',').map((uid) => uid.trim()).filter(Boolean)
-    ?? process.env.ADMIN_USER_IDS?.split(',').map((uid) => uid.trim()).filter(Boolean)
-    ?? [];
+  const allowedUid = (process.env.ADMIN_USER_IDS ?? process.env.ADMIN_UIDS ?? '')
+    .split(',')
+    .map((uid) => uid.trim())
+    .filter(Boolean);
   if (allowedUid.includes(decoded.sub)) return true;
   const allowedEmails = process.env.ADMIN_EMAILS?.split(',').map((email) => email.trim().toLowerCase()).filter(Boolean) ?? [];
   return decoded.email_verified === true
