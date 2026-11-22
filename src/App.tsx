@@ -13,10 +13,9 @@ import { CheckCircle2, Clock3 } from 'lucide-react';
 import { AuthScreen } from './components/AuthScreen';
 import { AdminPanel } from './components/AdminPanel';
 import { UserAppointmentChat } from './components/UserAppointmentChat';
-import { LegalPage } from './components/LegalPage';
 import patientFlowDiagram from './assets/images/DIAGRAM xd.png';
 
-const AppContent: React.FC = () => {
+const AppContent: React.FC<{ user: ReturnType<typeof useUser>['user'] }> = ({ user }) => {
   const { activeSection, notificationToast, setNotificationToast, appointmentRequestAvailability, language } = useHealthCenter();
 
   useEffect(() => {
@@ -92,14 +91,6 @@ const AppContent: React.FC = () => {
 export default function App() {
   const { isLoaded, isSignedIn, getToken, signOut } = useAuth();
   const { user } = useUser();
-  const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
-  const legalPage = pathname === '/privacy-policy'
-    ? 'privacy'
-    : pathname === '/terms-of-service'
-      ? 'terms'
-      : null;
-  const isSignInPage = pathname === '/sign-in';
-  const isAdminPage = pathname === '/admin';
   const [accountRole, setAccountRole] = useState<'checking' | 'admin' | 'user' | 'error'>('checking');
   const [roleError, setRoleError] = useState('');
 
@@ -142,9 +133,7 @@ export default function App() {
     };
   }, [getToken, isLoaded, isSignedIn, user]);
 
-  if (legalPage) return <LegalPage page={legalPage} />;
-
-  if (!isLoaded && (isSignInPage || isAdminPage)) {
+  if (!isLoaded) {
     return (
       <main className="flex min-h-dvh items-center justify-center bg-[#eef2ee] text-sm font-bold text-[#173a37]">
         Loading...
@@ -152,17 +141,9 @@ export default function App() {
     );
   }
 
-  if (isLoaded && !isSignedIn && (isSignInPage || isAdminPage)) return <AuthScreen />;
+  if (!isSignedIn || !user) return <AuthScreen />;
 
-  if (isSignedIn && !user) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center bg-[#eef2ee] text-sm font-bold text-[#173a37]">
-        Loading...
-      </main>
-    );
-  }
-
-  if (isSignedIn && accountRole === 'checking') {
+  if (accountRole === 'checking') {
     return (
       <main className="flex min-h-dvh items-center justify-center bg-[#eef2ee] text-sm font-bold text-[#173a37]">
         Checking account access...
@@ -170,7 +151,7 @@ export default function App() {
     );
   }
 
-  if (isSignedIn && accountRole === 'error') {
+  if (accountRole === 'error') {
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-[#eef2ee] px-5 text-center text-[#173a37]">
         <p role="alert" className="max-w-md text-sm">{roleError}</p>
@@ -179,11 +160,11 @@ export default function App() {
     );
   }
 
-  if (isSignedIn && accountRole === 'admin') return <AdminPanel />;
+  if (accountRole === 'admin') return <AdminPanel />;
 
   return (
     <HealthCenterProvider>
-      <AppContent />
+      <AppContent user={user} />
     </HealthCenterProvider>
   );
 }

@@ -32,9 +32,6 @@ export const Hero: React.FC = () => {
             <h1 className="hero-enter max-w-xl text-3xl sm:text-4xl lg:text-[46px] font-bold leading-[1.08] text-white">
               Mayor Moises R. Flores Health Center
             </h1>
-            <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/85 sm:text-base">
-              Official health center information, clinic services and schedules, patient guidance, and appointment requests for the Municipality of Pateros.
-            </p>
             <div className="hero-actions mt-7 flex flex-wrap gap-3">
               {bookingEnabled && <button onClick={() => setBookingModalOpen(true)} className="inline-flex items-center gap-2 bg-white text-[#0f4d3c] px-5 py-3 text-sm font-bold rounded-sm border border-white hover:bg-[#eaf3ee] transition-colors">
                 <CalendarDays className="w-4 h-4" /> REQUEST AN APPOINTMENT
