@@ -16,9 +16,9 @@ export const AuthScreen: React.FC = () => {
       borderRadius: '0.5rem',
     },
     elements: {
-      rootBox: 'w-full',
-      cardBox: 'w-full shadow-none',
-      card: 'w-full border-0 bg-transparent p-0 shadow-none',
+      rootBox: '!w-full !min-w-0 !max-w-full',
+      cardBox: '!w-full !min-w-0 !max-w-full shadow-none',
+      card: '!w-full !min-w-0 !max-w-full border-0 bg-transparent p-0 shadow-none',
       headerTitle: '!text-zinc-900',
       headerSubtitle: '!text-zinc-600',
       formFieldLabel: '!text-zinc-800',
@@ -47,9 +47,9 @@ export const AuthScreen: React.FC = () => {
   };
 
   return (
-    <main className="min-h-dvh bg-white px-4 py-8 text-zinc-900 sm:flex sm:items-center sm:justify-center sm:py-12">
-      <section className="mx-auto w-full max-w-md border border-zinc-200 bg-white shadow-[0_18px_50px_rgba(0,0,0,0.08)]">
-        <div className="border-b border-zinc-200 px-6 py-5 sm:px-8">
+    <main className="min-h-dvh bg-white px-3 py-4 text-zinc-900 sm:flex sm:items-center sm:justify-center sm:px-4 sm:py-12">
+      <section className="mx-auto w-full min-w-0 max-w-md border border-zinc-200 bg-white shadow-[0_18px_50px_rgba(0,0,0,0.08)]">
+        <div className="border-b border-zinc-200 px-4 py-4 sm:px-8 sm:py-5">
           <div className="flex items-center gap-3">
             <img src={centerPhoto} alt="Mayor Moises R. Flores Health Center" className="h-12 w-12 rounded-full border border-zinc-200 object-cover" />
             <div>
@@ -59,7 +59,7 @@ export const AuthScreen: React.FC = () => {
           </div>
         </div>
 
-        <div className="px-6 py-7 sm:px-8">
+        <div className="min-w-0 px-3 py-5 sm:px-8 sm:py-7">
           {isRegistering ? (
             <SignUp routing="hash" signInUrl="#" appearance={signUpAppearance} />
           ) : (
