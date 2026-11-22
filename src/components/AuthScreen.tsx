@@ -4,6 +4,16 @@ import centerPhoto from '../assets/images/MR FLORES.png';
 
 export const AuthScreen: React.FC = () => {
   const [isRegistering, setIsRegistering] = useState(false);
+  const handleAuthNavigation = (event: React.MouseEvent<HTMLDivElement>) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+
+    const link = target.closest<HTMLAnchorElement>('a[href="#"]');
+    if (!link) return;
+
+    event.preventDefault();
+    setIsRegistering((registering) => !registering);
+  };
 
   const signUpAppearance = {
     variables: {
@@ -19,13 +29,20 @@ export const AuthScreen: React.FC = () => {
       rootBox: 'w-full',
       cardBox: 'w-full shadow-none',
       card: 'w-full border-0 bg-transparent p-0 shadow-none',
-      headerTitle: 'text-white',
-      headerSubtitle: 'text-zinc-400',
-      formFieldLabel: 'text-zinc-100',
-      formFieldInput: 'border border-zinc-700 bg-[#26262b] text-zinc-100',
+      headerTitle: '!text-white',
+      headerSubtitle: '!text-zinc-300',
+      formFieldLabel: '!text-zinc-100',
+      formFieldHintText: '!text-zinc-300',
+      formFieldErrorText: '!text-rose-300',
+      formFieldInput: 'border border-zinc-700 bg-[#26262b] !text-zinc-100',
+      phoneInputInput: '!text-zinc-100',
+      socialButtonsBlockButton: '!border-zinc-700 !bg-[#1f1f23] hover:!bg-zinc-800',
+      socialButtonsBlockButtonText: '!text-white',
+      dividerText: '!text-zinc-300',
+      dividerLine: '!bg-white',
       formButtonPrimary: 'bg-[#8b00ff] hover:bg-[#7600db] shadow-none',
-      footer: 'hidden',
-      footerAction: 'hidden',
+      footerActionText: '!text-zinc-300',
+      footerActionLink: '!text-purple-300 hover:!text-purple-200',
     },
   };
   const signInAppearance = {
@@ -54,28 +71,18 @@ export const AuthScreen: React.FC = () => {
           <div className="flex items-center gap-3">
             <img src={centerPhoto} alt="Mayor Moises R. Flores Health Center" className="h-12 w-12 rounded-full border border-zinc-700 object-cover" />
             <div>
-              <div className="text-sm font-bold text-white">Mayor Moises R. Flores</div>
+              <div className="text-sm font-bold text-white">Mayor Moises R. Flores Pateros</div>
               <div className="mt-0.5 text-xs text-zinc-400">Health Center</div>
             </div>
           </div>
         </div>
 
-        <div className="px-6 py-7 sm:px-8">
+        <div className="px-6 py-7 sm:px-8" onClickCapture={handleAuthNavigation}>
           {isRegistering ? (
             <SignUp routing="hash" signInUrl="#" appearance={signUpAppearance} />
           ) : (
             <SignIn routing="hash" signUpUrl="#" appearance={signInAppearance} />
           )}
-          <div className="mt-5 border-t border-zinc-800 pt-4 text-center text-sm text-zinc-400">
-            {isRegistering ? 'Already have an account?' : 'New to the health center portal?'}{' '}
-            <button
-              type="button"
-              onClick={() => setIsRegistering((registering) => !registering)}
-              className="font-semibold text-[#a855f7] hover:text-[#c084fc]"
-            >
-              {isRegistering ? 'Sign in' : 'Create account'}
-            </button>
-          </div>
         </div>
       </section>
     </main>
