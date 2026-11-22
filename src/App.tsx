@@ -13,6 +13,7 @@ import { CheckCircle2, Clock3 } from 'lucide-react';
 import { AuthScreen } from './components/AuthScreen';
 import { AdminPanel } from './components/AdminPanel';
 import { UserAppointmentChat } from './components/UserAppointmentChat';
+import { LegalPage } from './components/LegalPage';
 import patientFlowDiagram from './assets/images/DIAGRAM xd.png';
 
 const AppContent: React.FC<{ user: ReturnType<typeof useUser>['user'] }> = ({ user }) => {
@@ -91,6 +92,12 @@ const AppContent: React.FC<{ user: ReturnType<typeof useUser>['user'] }> = ({ us
 export default function App() {
   const { isLoaded, isSignedIn, getToken, signOut } = useAuth();
   const { user } = useUser();
+  const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
+  const legalPage = pathname === '/privacy-policy'
+    ? 'privacy'
+    : pathname === '/terms-of-service'
+      ? 'terms'
+      : null;
   const [accountRole, setAccountRole] = useState<'checking' | 'admin' | 'user' | 'error'>('checking');
   const [roleError, setRoleError] = useState('');
 
@@ -132,6 +139,8 @@ export default function App() {
       active = false;
     };
   }, [getToken, isLoaded, isSignedIn, user]);
+
+  if (legalPage) return <LegalPage page={legalPage} />;
 
   if (!isLoaded) {
     return (

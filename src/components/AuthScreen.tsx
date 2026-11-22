@@ -76,6 +76,10 @@ export const AuthScreen: React.FC = () => {
               {isRegistering ? 'Sign in' : 'Create account'}
             </button>
           </div>
+          <nav aria-label="Legal" className="mt-4 flex justify-center gap-4 text-xs text-zinc-400">
+            <a href="/privacy-policy" className="underline underline-offset-2 hover:text-white">Privacy Policy</a>
+            <a href="/terms-of-service" className="underline underline-offset-2 hover:text-white">Terms of Service</a>
+          </nav>
         </div>
       </section>
     </main>

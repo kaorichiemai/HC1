@@ -4,5 +4,9 @@
       "path": "/api/reminders",
       "schedule": "0 0 * * *"
     }
+  ],
+  "rewrites": [
+    { "source": "/privacy-policy", "destination": "/" },
+    { "source": "/terms-of-service", "destination": "/" }
   ]
 }
