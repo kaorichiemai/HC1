@@ -4,16 +4,6 @@ import centerPhoto from '../assets/images/MR FLORES.png';
 
 export const AuthScreen: React.FC = () => {
   const [isRegistering, setIsRegistering] = useState(false);
-  const handleAuthNavigation = (event: React.MouseEvent<HTMLDivElement>) => {
-    const target = event.target;
-    if (!(target instanceof Element)) return;
-
-    const link = target.closest<HTMLAnchorElement>('a[href="#"]');
-    if (!link) return;
-
-    event.preventDefault();
-    setIsRegistering((registering) => !registering);
-  };
 
   const signUpAppearance = {
     variables: {
@@ -43,6 +33,7 @@ export const AuthScreen: React.FC = () => {
       formButtonPrimary: 'bg-[#8b00ff] hover:bg-[#7600db] shadow-none',
       footerActionText: '!text-zinc-300',
       footerActionLink: '!text-purple-300 hover:!text-purple-200',
+      footerAction: '!hidden',
     },
   };
   const signInAppearance = {
@@ -77,12 +68,22 @@ export const AuthScreen: React.FC = () => {
           </div>
         </div>
 
-        <div className="px-6 py-7 sm:px-8" onClickCapture={handleAuthNavigation}>
+        <div className="px-6 py-7 sm:px-8">
           {isRegistering ? (
             <SignUp routing="hash" signInUrl="#" appearance={signUpAppearance} />
           ) : (
             <SignIn routing="hash" signUpUrl="#" appearance={signInAppearance} />
           )}
+          <div className="mt-5 border-t border-zinc-800 pt-4 text-center text-sm text-zinc-300">
+            {isRegistering ? "Already have an account? " : "Don't have an account? "}
+            <button
+              type="button"
+              onClick={() => setIsRegistering((registering) => !registering)}
+              className="font-semibold text-purple-300 hover:text-purple-200"
+            >
+              {isRegistering ? 'Sign in' : 'Sign up'}
+            </button>
+          </div>
         </div>
       </section>
     </main>
