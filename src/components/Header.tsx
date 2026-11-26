@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { Accessibility, Menu, X, CalendarDays, LogIn, LogOut, Mail } from 'lucide-react';
+import { Accessibility, Menu, X, LogIn, LogOut, Mail } from 'lucide-react';
 import { useAuth } from '@clerk/react';
 import { AccessibilityTools } from './AccessibilityTools';
 
@@ -10,15 +10,11 @@ export const Header: React.FC = () => {
     language,
     activeSection,
     setActiveSection,
-    setBookingModalOpen,
     setAuthModalOpen,
-    appointmentRequestAvailability,
     setMessagesOpen,
     unreadAdminMessageCount,
     unreadMessagesError,
   } = useHealthCenter();
-  const bookingEnabled = appointmentRequestAvailability === 'available';
-
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [accessibilityOpen, setAccessibilityOpen] = useState(false);
   const closeAccessibility = useCallback(() => setAccessibilityOpen(false), []);
@@ -67,10 +63,6 @@ export const Header: React.FC = () => {
               <Accessibility className="h-5 w-5" aria-hidden="true" />
               <span>{language === 'fil' ? 'Aksesibilidad' : 'Accessibility'}</span>
             </button>
-            {bookingEnabled && <button onClick={() => setBookingModalOpen(true)} title="Request an appointment" className="px-4 py-2.5 text-sm font-bold text-white bg-[#0f4d3c] hover:bg-[#2c7a5f] rounded-sm transition-colors whitespace-nowrap flex items-center gap-2">
-              <CalendarDays className="w-4 h-4" />
-              <span>REQUEST APPOINTMENT</span>
-            </button>}
             {isSignedIn ? (
               <>
                 <button type="button" onClick={() => setMessagesOpen(true)} className="relative p-2 text-[#4b5563] hover:bg-[#eaf3ee] hover:text-[#0f4d3c]" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
@@ -141,10 +133,6 @@ export const Header: React.FC = () => {
           </div>
 
           <div className="pt-3 border-t border-[#edf2ee]">
-            {bookingEnabled && <button onClick={() => { setBookingModalOpen(true); setMobileMenuOpen(false); }} className="min-h-11 w-full py-2.5 px-4 text-sm font-semibold text-white bg-[#0f4d3c] hover:bg-[#2c7a5f] rounded-md flex items-center justify-center gap-2">
-              <CalendarDays className="w-4 h-4" />
-              <span>REQUEST APPOINTMENT</span>
-            </button>}
             {isSignedIn && <button type="button" onClick={() => void signOut()} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-[#dce7e1] px-4 text-sm font-semibold text-[#4b5563] hover:bg-[#f8faf9]">
               <LogOut className="h-4 w-4" />
               Sign out
