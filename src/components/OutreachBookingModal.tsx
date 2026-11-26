@@ -464,7 +464,7 @@ export const OutreachBookingModal: React.FC = () => {
                 </div>
               </fieldset>
               <div className="sm:col-span-2">
-                <label htmlFor="appointment-chief-complaint" className="mb-1 block text-sm font-semibold text-slate-800">{isFilipino ? 'Pangunahing reklamo o dahilan ng pagbisita' : 'Chief complaint'} *</label>
+                <label htmlFor="appointment-chief-complaint" className="mb-1 block text-sm font-semibold text-slate-800">{isFilipino ? 'Pangunahing reklamo o dahilan ng pagbisita' : 'Health Concern:'} *</label>
                 <textarea id="appointment-chief-complaint" required minLength={2} maxLength={2000} rows={4} value={chiefComplaint} onChange={(event) => setChiefComplaint(event.target.value)} placeholder={isFilipino ? 'Ilarawan nang maikli ang iyong nararamdaman o serbisyong kailangan.' : 'Briefly describe your concern or the service you need.'} className="w-full resize-y rounded-md border border-slate-300 px-3.5 py-3 text-base focus:outline-none focus:ring-2 focus:ring-teal-700" />
               </div>
               <div className="sm:col-span-2">
