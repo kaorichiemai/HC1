@@ -61,16 +61,20 @@ export const AppointmentSchedule: React.FC = () => {
   }, [isFilipino]);
 
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
-  const appointmentsByDate = slots.reduce<Record<string, ScheduleSlot[]>>((grouped, slot) => {
-    (grouped[slot.date] ??= []).push(slot);
-    return grouped;
-  }, {});
-  const dates = Object.keys(appointmentsByDate).filter((date) => date >= today).sort();
-  const priorityAppointmentsByDate = prioritySlots.reduce<Record<string, PriorityScheduleSlot[]>>((grouped, slot) => {
-    (grouped[slot.date] ??= []).push(slot);
-    return grouped;
-  }, {});
-  const priorityDates = Object.keys(priorityAppointmentsByDate).filter((date) => date >= today).sort();
+  const priorityCounts = new Map(prioritySlots.map((slot) => [`${slot.date}:${slot.time}`, slot.priorityCount]));
+  const regularSlots = slots
+    .filter((slot) => slot.date >= today)
+    .map((slot) => ({
+      ...slot,
+      regularCount: Math.max(0, slot.bookedCount - (priorityCounts.get(`${slot.date}:${slot.time}`) ?? 0)),
+    }))
+    .filter((slot) => slot.regularCount > 0)
+    .sort((first, second) => first.date.localeCompare(second.date)
+      || (getAppointmentTimeMinutes(first.time) ?? 1440) - (getAppointmentTimeMinutes(second.time) ?? 1440));
+  const upcomingPrioritySlots = prioritySlots
+    .filter((slot) => slot.date >= today && slot.priorityCount > 0)
+    .sort((first, second) => first.date.localeCompare(second.date)
+      || (getAppointmentTimeMinutes(first.time) ?? 1440) - (getAppointmentTimeMinutes(second.time) ?? 1440));
 
   return (
     <section id="appointment-schedule" className="site-section-bg section-enter border-b border-[#dce7e1] py-8 sm:py-10">
@@ -80,10 +84,10 @@ export const AppointmentSchedule: React.FC = () => {
           <div>
             <div className="mb-2 flex items-center gap-2 text-xs font-bold text-[#2c7a5f]">
               <CalendarDays className="h-4 w-4" />
-              {isFilipino ? 'Mga kumpirmadong appointment' : 'Accepted appointments'}
+              {isFilipino ? 'Mga kumpirmadong appointment' : 'Confirmed appointments'}
             </div>
             <h2 className="text-2xl font-bold text-[#0f4d3c] sm:text-3xl">
-              {isFilipino ? 'Mga petsa at oras' : 'Dates and Time Slots'}
+              {isFilipino ? 'Iskedyul ng appointment' : 'Appointment Schedule'}
             </h2>
           </div>
         </div>
@@ -92,94 +96,96 @@ export const AppointmentSchedule: React.FC = () => {
         {error && <p role="alert" className="border-y border-[#dce7e1] py-5 text-sm text-rose-800">{error}</p>}
 
         {!loading && !error && (
-          dates.length === 0 ? (
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(260px,0.7fr)]">
-              <div className="site-card flex flex-col items-start p-6 sm:p-8">
-                <CalendarDays className="h-8 w-8 text-[#2c7a5f]" aria-hidden="true" />
-                <h3 className="mt-4 text-xl font-bold text-[#0f4d3c]">{isFilipino ? 'Iskedyul ng appointment' : 'Appointment schedule'}</h3>
-                <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#6b7280]">
-                  {isFilipino ? 'Lalabas dito ang mga oras ng appointment kapag nakumpirma na ang mga ito.' : 'Confirmed appointment times will appear here after automatic or staff approval.'}
-                </p>
-              </div>
-              <aside className="site-card p-5 sm:p-6">
-                <h3 className="text-sm font-bold text-[#0f4d3c]">{isFilipino ? 'Mabilisang impormasyon' : 'Quick information'}</h3>
-                <dl className="mt-4 space-y-4 text-sm">
-                  <div><dt className="flex items-center gap-2 font-semibold text-[#374151]"><Clock3 className="h-4 w-4 text-[#2c7a5f]" />{isFilipino ? 'Oras ng klinika' : 'Clinic hours'}</dt><dd className="mt-1 pl-6 text-[#6b7280]">{isFilipino ? settings.clinicHoursFil : settings.clinicHours}</dd></div>
-                  <div><dt className="flex items-center gap-2 font-semibold text-[#374151]"><MapPin className="h-4 w-4 text-[#2c7a5f]" />{isFilipino ? 'Lokasyon' : 'Location'}</dt><dd className="mt-1 pl-6 text-[#6b7280]">{isFilipino ? settings.clinicAddressFil : settings.clinicAddress}</dd></div>
-                </dl>
-              </aside>
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {dates.flatMap((date) => appointmentsByDate[date]
-                .slice()
-                .sort((first, second) => {
-                  const firstMinutes = getAppointmentTimeMinutes(first.time)
-                    ?? (first.time === 'morning' ? 0 : first.time === 'afternoon' ? 720 : 1440);
-                  const secondMinutes = getAppointmentTimeMinutes(second.time)
-                    ?? (second.time === 'morning' ? 0 : second.time === 'afternoon' ? 720 : 1440);
-                  return firstMinutes - secondMinutes;
-                })
-                .map((slot) => (
-                  <article key={`${date}-${slot.time}`} className="site-card p-5 transition-colors hover:border-[#9bbdad]">
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-[#2c7a5f]">{date}</p>
-                    <h3 className="mt-1 text-sm font-bold text-[#0f4d3c]">{dateLabel(date)}</h3>
-                    <div className="mt-5 flex items-center gap-2 border-t border-[#e7eee9] pt-4">
-                      <Clock3 className="h-5 w-5 shrink-0 text-[#2c7a5f]" />
-                      <span className="text-base font-bold text-[#0f4d3c]">{formatAppointmentTime(slot.time)}</span>
-                    </div>
-                    <p className="mt-3 text-sm text-[#6b7280]">
-                      <strong className="text-[#374151]">{slot.bookedCount}</strong> {isFilipino ? 'appointment na naaprubahan' : `accepted ${slot.bookedCount === 1 ? 'appointment' : 'appointments'}`}
+          <div className="grid items-start gap-5 lg:grid-cols-2">
+            <section aria-labelledby="priority-schedule-title" className="overflow-hidden rounded-xl border-2 border-amber-400 bg-gradient-to-br from-amber-50 via-white to-orange-50 shadow-lg shadow-amber-100/70">
+              <header className="border-b border-amber-200 bg-amber-100/80 px-5 py-5 sm:px-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-md shadow-amber-200">
+                    <CalendarDays className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h3 id="priority-schedule-title" className="text-xl font-extrabold tracking-tight text-amber-950">
+                      {isFilipino ? 'Mga priority appointment' : 'Priority Appointments'}
+                    </h3>
+                    <p className="mt-1 text-xs font-medium text-amber-900/80">
+                      {isFilipino ? 'Prayoridad na oras ng appointment' : 'Priority appointment times'}
                     </p>
-                  </article>
-                )))
-              }
-            </div>
-          )
-        )}
-        {!loading && !error && priorityDates.length > 0 && (
-          <section aria-labelledby="priority-schedule-title" className="mt-8 border-t border-[#dce7e1] pt-6">
-            <div className="mb-4">
-              <h3 id="priority-schedule-title" className="text-xl font-bold text-[#0f4d3c]">
-                {isFilipino ? 'Iskedyul ng mga priority appointment' : 'Priority Appointment Schedule'}
-              </h3>
-              <p className="mt-1 text-sm text-[#6b7280]">
-                {isFilipino
-                  ? 'Ipinapakita lamang ang oras at kabuuang bilang; pribado ang mga detalye ng pasyente.'
-                  : 'Only appointment times and totals are shown; patient details remain private.'}
-              </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {priorityDates.flatMap((date) => priorityAppointmentsByDate[date]
-                .slice()
-                .sort((first, second) => {
-                  const firstMinutes = getAppointmentTimeMinutes(first.time)
-                    ?? (first.time === 'morning' ? 0 : first.time === 'afternoon' ? 720 : 1440);
-                  const secondMinutes = getAppointmentTimeMinutes(second.time)
-                    ?? (second.time === 'morning' ? 0 : second.time === 'afternoon' ? 720 : 1440);
-                  return firstMinutes - secondMinutes;
-                })
-                .map((slot) => (
-                  <article key={`${date}-${slot.time}`} className="site-card border-l-4 border-l-amber-500 p-5">
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-[#2c7a5f]">{date}</p>
-                    <h4 className="mt-1 text-sm font-bold text-[#0f4d3c]">{dateLabel(date)}</h4>
-                    <div className="mt-4 flex items-center gap-2 border-t border-[#e7eee9] pt-4">
-                      <Clock3 className="h-5 w-5 shrink-0 text-amber-700" />
-                      <span className="text-base font-bold text-[#0f4d3c]">{formatAppointmentTime(slot.time)}</span>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-amber-950/80">
+                  {isFilipino
+                    ? 'Oras at bilang lamang ang ipinapakita. Pribado ang impormasyon ng pasyente.'
+                    : 'Times and totals only; patient information stays private.'}
+                </p>
+              </header>
+              <div className="grid gap-3 p-4 sm:p-5">
+                {upcomingPrioritySlots.map((slot) => (
+                  <article key={`${slot.date}-${slot.time}`} className="rounded-lg border border-amber-200 bg-white p-4 shadow-sm">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800">{dateLabel(slot.date)}</p>
+                    <p className="mt-1 text-xs text-amber-700">{slot.date}</p>
+                    <div className="mt-3 flex items-center gap-2 border-t border-amber-100 pt-3">
+                      <Clock3 className="h-5 w-5 shrink-0 text-amber-600" />
+                      <span className="text-base font-extrabold text-amber-950">{formatAppointmentTime(slot.time)}</span>
                     </div>
-                    <p className="mt-3 text-sm text-[#6b7280]">
-                      <strong className="text-[#374151]">{slot.priorityCount}</strong>{' '}
+                    <p className="mt-2 text-sm text-amber-900">
+                      <strong>{slot.priorityCount}</strong>{' '}
                       {isFilipino
                         ? (slot.priorityCount === 1 ? 'appointment na prayoridad' : 'mga appointment na prayoridad')
                         : `priority ${slot.priorityCount === 1 ? 'appointment' : 'appointments'}`}
                     </p>
                   </article>
-                )))
-              }
-            </div>
-          </section>
+                ))}
+                {upcomingPrioritySlots.length === 0 && (
+                  <p className="rounded-lg border border-dashed border-amber-300 bg-white/70 px-4 py-8 text-center text-sm text-amber-900">
+                    {isFilipino ? 'Wala pang kumpirmadong priority appointment.' : 'No confirmed priority appointments yet.'}
+                  </p>
+                )}
+              </div>
+            </section>
+
+            <section aria-labelledby="regular-schedule-title" className="overflow-hidden rounded-xl border border-[#dce7e1] bg-white shadow-sm">
+              <header className="border-b border-[#dce7e1] bg-[#f2f7f4] px-5 py-5 sm:px-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#17645c] text-white">
+                    <CalendarDays className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h3 id="regular-schedule-title" className="text-xl font-bold text-[#0f4d3c]">
+                      {isFilipino ? 'Mga regular na appointment' : 'Regular Appointments'}
+                    </h3>
+                    <p className="mt-1 text-xs font-medium text-[#66736f]">
+                      {isFilipino ? 'Iba pang kumpirmadong appointment' : 'Other confirmed appointments'}
+                    </p>
+                  </div>
+                </div>
+              </header>
+              <div className="grid gap-3 p-4 sm:p-5">
+                {regularSlots.map((slot) => (
+                  <article key={`${slot.date}-${slot.time}`} className="rounded-lg border border-[#dce7e1] bg-white p-4">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-[#2c7a5f]">{dateLabel(slot.date)}</p>
+                    <p className="mt-1 text-xs text-[#66736f]">{slot.date}</p>
+                    <div className="mt-3 flex items-center gap-2 border-t border-[#e7eee9] pt-3">
+                      <Clock3 className="h-5 w-5 shrink-0 text-[#2c7a5f]" />
+                      <span className="text-base font-bold text-[#0f4d3c]">{formatAppointmentTime(slot.time)}</span>
+                    </div>
+                    <p className="mt-2 text-sm text-[#6b7280]">
+                      <strong className="text-[#374151]">{slot.regularCount}</strong>{' '}
+                      {isFilipino
+                        ? (slot.regularCount === 1 ? 'regular na appointment' : 'regular na mga appointment')
+                        : `regular ${slot.regularCount === 1 ? 'appointment' : 'appointments'}`}
+                    </p>
+                  </article>
+                ))}
+                {regularSlots.length === 0 && (
+                  <p className="rounded-lg border border-dashed border-[#cbd8d0] bg-[#f8faf9] px-4 py-8 text-center text-sm text-[#66736f]">
+                    {isFilipino ? 'Wala pang kumpirmadong regular na appointment.' : 'No confirmed regular appointments yet.'}
+                  </p>
+                )}
+              </div>
+            </section>
+          </div>
         )}
-        {!loading && !error && dates.length > 0 && (
+        {!loading && !error && (
           <div className="mt-5 flex flex-wrap items-start gap-x-8 gap-y-3 border-t border-[#dce7e1] pt-4 text-xs text-[#6b7280]">
             <span className="flex items-start gap-2"><Clock3 className="mt-0.5 h-4 w-4 text-[#2c7a5f]" />{isFilipino ? settings.clinicHoursFil : settings.clinicHours}</span>
             <span className="flex items-start gap-2"><MapPin className="mt-0.5 h-4 w-4 text-[#2c7a5f]" />{isFilipino ? settings.clinicAddressFil : settings.clinicAddress}</span>
