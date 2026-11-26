@@ -47,6 +47,10 @@ export const ServicesSection: React.FC = () => {
         : 'REQUEST AN APPOINTMENT';
 
   const [selectedService, setSelectedService] = useState<ServiceDetail | null>(null);
+  const handleRequestAppointment = (serviceId: string) => {
+    setSelectedService(null);
+    openBookingForProgram(serviceId);
+  };
   const servicePreview = (description: string) => {
     const firstSentence = description.trim().match(/^.*?[.!?](?=\s|$)/)?.[0] ?? description.trim();
     return firstSentence.length > 150 ? `${firstSentence.slice(0, 147).trimEnd()}...` : firstSentence;
@@ -114,7 +118,7 @@ export const ServicesSection: React.FC = () => {
               <div><div className="font-bold text-[#0f4d3c]">Location</div><p className="mt-1 text-[#6b7280]">{selectedService.location}</p></div>
               <div><div className="font-bold text-[#0f4d3c]">Care team</div><p className="mt-1 text-[#6b7280]">{selectedService.keyPersonnel.join(', ')}</p></div>
             </div>
-            <button disabled={!bookingEnabled} onClick={() => openBookingForProgram(selectedService.id)} className="mt-6 inline-flex min-h-11 items-center justify-center rounded-sm bg-[#0f4d3c] px-4 py-3 text-sm font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-50">{bookingLabel}</button>
+            <button disabled={!bookingEnabled} onClick={() => handleRequestAppointment(selectedService.id)} className="mt-6 inline-flex min-h-11 items-center justify-center rounded-sm bg-[#0f4d3c] px-4 py-3 text-sm font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-50">{bookingLabel}</button>
           </section>
         </div>
       ), document.body)}
