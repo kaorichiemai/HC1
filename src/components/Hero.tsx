@@ -2,7 +2,6 @@ import React from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { CalendarDays, ArrowDown, Clock3, MapPin } from 'lucide-react';
 import centerPhoto from '../assets/images/MR FLORES.png';
-import { ListenButton } from './AccessibilityTools';
 
 export const Hero: React.FC = () => {
   const { language, setActiveSection, setBookingModalOpen, appointmentRequestAvailability, siteContent } = useHealthCenter();
@@ -15,7 +14,7 @@ export const Hero: React.FC = () => {
   };
 
   return (
-    <section id="overview" data-speech-section className="hero-section-enter bg-[#0f4d3c] text-white">
+    <section id="overview" className="hero-section-enter bg-[#0f4d3c] text-white">
       <div className="relative min-h-[300px] sm:min-h-[340px] flex items-center overflow-hidden border-b border-white/10">
         <img src={centerPhoto} alt="Mayor Moises R. Flores Health Center" className="absolute inset-0 w-full h-full object-cover object-center" />
         <div className="absolute inset-0 bg-[#0f4d3c]/88" />
@@ -25,7 +24,6 @@ export const Hero: React.FC = () => {
             <h1 className="hero-enter max-w-xl text-3xl sm:text-4xl lg:text-[46px] font-bold leading-[1.08] text-white">
               Mayor Moises R. Flores Health Center
             </h1>
-            <ListenButton className="mt-4 border-white/50 bg-transparent text-white hover:bg-white/10 hover:text-white" />
             <div className="hero-actions mt-7 flex flex-wrap gap-3">
               {bookingEnabled && <button onClick={() => setBookingModalOpen(true)} className="inline-flex items-center gap-2 bg-white text-[#0f4d3c] px-5 py-3 text-sm font-bold rounded-sm border border-white hover:bg-[#eaf3ee] transition-colors">
                 <CalendarDays className="w-4 h-4" /> REQUEST AN APPOINTMENT

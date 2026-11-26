@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { CalendarDays, Clock3, MapPin } from 'lucide-react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { formatAppointmentTime, getAppointmentTimeMinutes } from '../appointmentSchedule';
-import { ListenButton } from './AccessibilityTools';
 
 interface ScheduleSlot {
   date: string;
@@ -78,7 +77,7 @@ export const AppointmentSchedule: React.FC = () => {
       || (getAppointmentTimeMinutes(first.time) ?? 1440) - (getAppointmentTimeMinutes(second.time) ?? 1440));
 
   return (
-    <section id="appointment-schedule" data-speech-section className="site-section-bg section-enter border-b border-[#dce7e1] py-8 sm:py-10">
+    <section id="appointment-schedule" className="site-section-bg section-enter border-b border-[#dce7e1] py-8 sm:py-10">
       <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
         <div className="breadcrumb">Home <span aria-hidden="true">/</span> <span className="font-semibold text-[#0f4d3c]">Schedule</span></div>
         <div className="mb-7">
@@ -86,7 +85,6 @@ export const AppointmentSchedule: React.FC = () => {
             <h2 className="text-2xl font-bold uppercase text-[#0f4d3c] sm:text-3xl">
               {isFilipino ? 'MGA NAKATAKDANG APPOINTMENT' : 'UPCOMING APPOINTMENTS'}
             </h2>
-            <ListenButton className="mt-3" />
           </div>
         </div>
 

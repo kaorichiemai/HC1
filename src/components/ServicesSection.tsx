@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { ServiceDetail } from '../types';
-import { ListenButton } from './AccessibilityTools';
 import { Activity, ArrowRight, Baby, Clock, Heart, MapPin, Pill, ShieldAlert, Smile, Stethoscope, X } from 'lucide-react';
 import animalBiteImage from '../assets/images/ANIMAL BITE.jpg';
 import bnsImage from '../assets/images/BNS.png';
@@ -54,14 +53,13 @@ export const ServicesSection: React.FC = () => {
   };
 
   return (
-    <section id="services" data-speech-section className="site-section-bg section-enter services-enter border-b border-[#dce7e1] py-8 sm:py-10">
+    <section id="services" className="site-section-bg section-enter services-enter border-b border-[#dce7e1] py-8 sm:py-10">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
         <div className="breadcrumb">Home <span aria-hidden="true">/</span> <span className="font-semibold text-[#0f4d3c]">Services</span></div>
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-6">
           <div className="max-w-2xl">
             <div className="text-xs font-bold text-[#2c7a5f] uppercase mb-2">Health services</div>
             <p className="mt-2 text-sm text-[#6b7280]">Schedules, locations, and care information.</p>
-            <ListenButton className="mt-3" />
           </div>
         </div>
 

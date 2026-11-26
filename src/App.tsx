@@ -14,7 +14,6 @@ import { AuthScreen } from './components/AuthScreen';
 import { AdminPanel } from './components/AdminPanel';
 import { UserAppointmentChat } from './components/UserAppointmentChat';
 import patientFlowDiagram from './assets/images/DIAGRAM xd.png';
-import { AccessibilityTools } from './components/AccessibilityTools';
 import { AccessibilityProvider } from './context/AccessibilityContext';
 
 const AppContent: React.FC<{ user: ReturnType<typeof useUser>['user'] }> = ({ user }) => {
@@ -57,7 +56,7 @@ const AppContent: React.FC<{ user: ReturnType<typeof useUser>['user'] }> = ({ us
         </div>
       )}
 
-      <main id="main-content" key={activeSection} data-speech-content tabIndex={-1} className="public-view-enter flex-1">
+      <main id="main-content" key={activeSection} tabIndex={-1} className="public-view-enter flex-1">
         {activeSection === 'clinic-information' ? (
           <PublicInformation />
         ) : activeSection === 'appointment-schedule' ? (
@@ -87,7 +86,6 @@ const AppContent: React.FC<{ user: ReturnType<typeof useUser>['user'] }> = ({ us
 
       <UserAppointmentChat />
       <OutreachBookingModal />
-      <AccessibilityTools />
 
       {notificationToast && (
         <div className="fixed bottom-5 right-5 z-50 bg-[#0f4d3c] text-white px-4 py-3 rounded-md shadow-lg border border-white/10 text-sm font-semibold flex items-center gap-2 max-w-sm animate-fade-in">

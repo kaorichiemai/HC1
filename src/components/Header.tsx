@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { Menu, X, Globe, CalendarDays, LogOut, Mail } from 'lucide-react';
+import { Accessibility, Menu, X, Globe, CalendarDays, LogOut, Mail } from 'lucide-react';
 import centerPhoto from '../assets/images/MR FLORES.png';
 import { useAuth } from '@clerk/react';
+import { AccessibilityTools } from './AccessibilityTools';
 
 export const Header: React.FC = () => {
   const { signOut } = useAuth();
@@ -21,6 +22,8 @@ export const Header: React.FC = () => {
   const bookingEnabled = appointmentRequestAvailability === 'available';
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [accessibilityOpen, setAccessibilityOpen] = useState(false);
+  const closeAccessibility = useCallback(() => setAccessibilityOpen(false), []);
   const navLinks = [
     { id: 'overview', label: 'HOME' },
     { id: 'clinic-information', label: 'INFORMATION' },
@@ -65,6 +68,17 @@ export const Header: React.FC = () => {
 
           <div className="hidden xl:flex items-center gap-4 shrink-0">
             <button
+              type="button"
+              onClick={() => setAccessibilityOpen(true)}
+              aria-label={language === 'fil' ? 'Mga setting ng accessibility' : 'Accessibility settings'}
+              aria-haspopup="dialog"
+              aria-expanded={accessibilityOpen}
+              className="flex min-h-11 items-center gap-2 rounded-md px-2 text-sm font-semibold text-[#4b5563] hover:bg-[#eaf3ee] hover:text-[#0f4d3c]"
+            >
+              <Accessibility className="h-5 w-5" aria-hidden="true" />
+              <span>{language === 'fil' ? 'Aksesibilidad' : 'Accessibility'}</span>
+            </button>
+            <button
               onClick={toggleLanguage}
               className="flex min-h-9 items-center gap-1.5 px-2 text-[#4b5563] hover:text-[#0f4d3c] transition-colors cursor-pointer"
               title="Toggle English / Filipino"
@@ -86,6 +100,16 @@ export const Header: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-1 xl:hidden sm:gap-2">
+            <button
+              type="button"
+              onClick={() => setAccessibilityOpen(true)}
+              aria-label={language === 'fil' ? 'Mga setting ng accessibility' : 'Accessibility settings'}
+              aria-haspopup="dialog"
+              aria-expanded={accessibilityOpen}
+              className="flex h-11 w-11 items-center justify-center rounded-md text-[#4b5563] hover:bg-[#eaf3ee] hover:text-[#0f4d3c]"
+            >
+              <Accessibility className="h-5 w-5" aria-hidden="true" />
+            </button>
             <button
               onClick={toggleLanguage}
               className="flex h-11 w-11 items-center justify-center text-[#4b5563] hover:text-[#0f4d3c] xl:hidden"
@@ -148,6 +172,7 @@ export const Header: React.FC = () => {
           </div>
         </div>
       )}
+      <AccessibilityTools open={accessibilityOpen} onClose={closeAccessibility} />
     </header>
   );
 };

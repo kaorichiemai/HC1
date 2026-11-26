@@ -1,55 +1,19 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Accessibility,
-  AudioLines,
   Check,
   Contrast,
   Eye,
   Minus,
   MousePointer2,
-  Pause,
-  Play,
   Plus,
   RotateCcw,
   Settings2,
-  Square,
   Type,
-  Volume2,
   X,
 } from 'lucide-react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { AccessibilityProfile, useAccessibility } from '../context/AccessibilityContext';
-
-function readableText(element: Element | null) {
-  if (!element) return '';
-  const selection = window.getSelection()?.toString().trim();
-  if (selection) return selection;
-  const clone = element.cloneNode(true) as HTMLElement;
-  clone.querySelectorAll('button, input, select, textarea, nav, [data-accessibility-ui], [aria-hidden="true"]').forEach((item) => item.remove());
-  return clone.innerText.trim();
-}
-
-export const ListenButton: React.FC<{ className?: string }> = ({ className = '' }) => {
-  const { language } = useHealthCenter();
-  const { speakText, speechStatus } = useAccessibility();
-  const isFilipino = language === 'fil';
-  return (
-    <button
-      type="button"
-      onClick={(event) => {
-        const section = event.currentTarget.closest('[data-speech-section]') ?? event.currentTarget.closest('main');
-        speakText(readableText(section));
-      }}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md border border-[#b8cec1] bg-white px-3 py-2 text-sm font-semibold text-[#0f4d3c] hover:bg-[#eaf3ee] ${className}`}
-      aria-label={isFilipino ? 'Pakinggan ang nilalaman ng seksyong ito' : 'Listen to this section'}
-      aria-pressed={speechStatus === 'speaking'}
-      data-accessibility-ui
-    >
-      <Volume2 className="h-4 w-4" aria-hidden="true" />
-      {speechStatus === 'speaking' ? (isFilipino ? 'Nagpe-play' : 'Playing') : (isFilipino ? 'Pakinggan' : 'Listen')}
-    </button>
-  );
-};
 
 const words = {
   en: {
@@ -82,18 +46,7 @@ const words = {
     reduceMotion: 'Reduce animations',
     screenReader: 'Screen reader and keyboard support',
     screenReaderInfo: 'Keyboard navigation and visible focus are supported. Device screen readers can read semantic page content; this panel does not replace your device assistive technology.',
-    listen: 'Listen to this page or selected text',
-    play: 'Play',
-    pause: 'Pause',
-    resume: 'Resume',
-    stop: 'Stop',
-    speed: 'Speech speed',
-    voice: 'Speech voice',
-    autoVoice: 'Automatic (page language)',
-    noVoices: 'No device voices are listed yet. The browser may load voices shortly.',
-    unsupported: 'Text-to-speech is not supported in this browser.',
     resetAll: 'Reset all accessibility settings',
-    enabled: 'Enabled',
   },
   fil: {
     title: 'Mga setting ng accessibility',
@@ -125,18 +78,7 @@ const words = {
     reduceMotion: 'Bawasan ang animation',
     screenReader: 'Suporta sa screen reader at keyboard',
     screenReaderInfo: 'May keyboard navigation at nakikitang focus. Mababasa ng screen reader ang semantic na nilalaman; hindi pinapalitan ng panel na ito ang assistive technology ng device.',
-    listen: 'Pakinggan ang pahina o napiling teksto',
-    play: 'I-play',
-    pause: 'I-pause',
-    resume: 'Ituloy',
-    stop: 'Ihinto',
-    speed: 'Bilis ng pagsasalita',
-    voice: 'Boses',
-    autoVoice: 'Awtomatiko (ayon sa wika ng pahina)',
-    noVoices: 'Wala pang nakalistang boses sa device. Maaaring i-load ito ng browser maya-maya.',
-    unsupported: 'Hindi suportado ng browser na ito ang text-to-speech.',
     resetAll: 'I-reset ang lahat ng accessibility setting',
-    enabled: 'Naka-on',
   },
 } as const;
 
@@ -147,28 +89,18 @@ const profileOptions: Array<{ id: AccessibilityProfile; icon: typeof Accessibili
   { id: 'motor', icon: MousePointer2, label: 'motor' },
 ];
 
-export const AccessibilityTools: React.FC = () => {
+export const AccessibilityTools: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   const { language, setLanguage } = useHealthCenter();
   const {
     settings,
     updateSettings,
     applyProfile,
     resetSettings,
-    speechStatus,
-    speechError,
-    activeSentence,
-    voices,
-    speakText,
-    pauseSpeech,
-    resumeSpeech,
-    stopSpeech,
   } = useAccessibility();
-  const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const isFilipino = language === 'fil';
   const t = words[language];
-  const isSpeechSupported = speechStatus !== 'unsupported';
 
   useEffect(() => {
     if (!open) return;
@@ -176,7 +108,7 @@ export const AccessibilityTools: React.FC = () => {
     closeButtonRef.current?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setOpen(false);
+        onClose();
         return;
       }
       if (event.key !== 'Tab' || !panelRef.current) return;
@@ -199,13 +131,7 @@ export const AccessibilityTools: React.FC = () => {
       document.removeEventListener('keydown', handleKeyDown);
       previousFocus?.focus();
     };
-  }, [open]);
-
-  const listenToPage = () => {
-    const selected = window.getSelection()?.toString().trim();
-    const text = selected || readableText(document.querySelector('[data-speech-content]') ?? document.querySelector('main'));
-    speakText(text);
-  };
+  }, [open, onClose]);
 
   const toggleSetting = (key: 'highlightLinks' | 'textSpacing' | 'dyslexiaFont' | 'largeCursor' | 'largeTouchTargets' | 'reduceMotion', value: boolean) => {
     updateSettings({ [key]: value });
@@ -217,24 +143,11 @@ export const AccessibilityTools: React.FC = () => {
   };
 
   return (
-    <div data-accessibility-ui>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label={t.title}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-controls="accessibility-settings-panel"
-        className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-[70] inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-white bg-[#0f4d3c] px-4 text-sm font-bold text-white shadow-lg hover:bg-[#17645c] focus-visible:outline-white sm:bottom-6 sm:right-6"
-      >
-        <Accessibility className="h-5 w-5" aria-hidden="true" />
-        <span className="hidden sm:inline">{isFilipino ? 'Aksesibilidad' : 'Accessibility'}</span>
-      </button>
-
+    <>
       {open && (
         <div
           className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/45 sm:items-end sm:justify-end sm:p-5"
-          onMouseDown={(event) => { if (event.target === event.currentTarget) setOpen(false); }}
+          onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
           data-accessibility-ui
         >
           <section
@@ -250,7 +163,7 @@ export const AccessibilityTools: React.FC = () => {
               <button
                 ref={closeButtonRef}
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={onClose}
                 aria-label={t.close}
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full hover:bg-white/15 focus-visible:outline-white"
               >
@@ -366,41 +279,6 @@ export const AccessibilityTools: React.FC = () => {
                 <p className="mt-1 text-xs leading-relaxed text-sky-900">{t.screenReaderInfo}</p>
               </section>
 
-              <section aria-labelledby="accessibility-speech-title" className="space-y-3 rounded-md border border-[#dce7e1] bg-[#f8faf9] p-3">
-                <h3 id="accessibility-speech-title" className="flex items-center gap-2 text-sm font-bold text-[#17312e]">
-                  <AudioLines className="h-4 w-4 text-[#17645c]" aria-hidden="true" />{t.listen}
-                </h3>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  <button type="button" disabled={!isSpeechSupported} onClick={listenToPage} className="flex min-h-12 items-center justify-center gap-1 rounded-md bg-[#17645c] px-2 text-xs font-bold text-white disabled:opacity-45">
-                    <Play className="h-4 w-4" aria-hidden="true" />{t.play}
-                  </button>
-                  <button type="button" disabled={speechStatus !== 'speaking'} onClick={pauseSpeech} className="flex min-h-12 items-center justify-center gap-1 rounded-md border border-[#b8cec1] px-2 text-xs font-bold text-[#17312e] disabled:opacity-45">
-                    <Pause className="h-4 w-4" aria-hidden="true" />{t.pause}
-                  </button>
-                  <button type="button" disabled={speechStatus !== 'paused'} onClick={resumeSpeech} className="flex min-h-12 items-center justify-center gap-1 rounded-md border border-[#b8cec1] px-2 text-xs font-bold text-[#17312e] disabled:opacity-45">
-                    <Play className="h-4 w-4" aria-hidden="true" />{t.resume}
-                  </button>
-                  <button type="button" disabled={speechStatus === 'idle' || speechStatus === 'unsupported'} onClick={stopSpeech} className="flex min-h-12 items-center justify-center gap-1 rounded-md border border-rose-200 px-2 text-xs font-bold text-rose-800 disabled:opacity-45">
-                    <Square className="h-3.5 w-3.5" aria-hidden="true" />{t.stop}
-                  </button>
-                </div>
-                <label className="block text-xs font-semibold text-[#374151]">
-                  {t.speed}: {settings.speechRate.toFixed(1)}×
-                  <input type="range" min="0.7" max="1.5" step="0.1" value={settings.speechRate} onChange={(event) => updateSettings({ speechRate: Number(event.target.value) })} className="mt-1.5 w-full accent-[#17645c]" />
-                </label>
-                <label className="block text-xs font-semibold text-[#374151]">
-                  {t.voice}
-                  <select value={settings.voiceURI} onChange={(event) => updateSettings({ voiceURI: event.target.value })} className="mt-1.5 min-h-11 w-full rounded-md border border-[#cbd8d0] bg-white px-3 text-sm">
-                    <option value="">{t.autoVoice}</option>
-                    {voices.map((voice) => <option key={voice.voiceURI} value={voice.voiceURI}>{voice.name} ({voice.lang})</option>)}
-                  </select>
-                </label>
-                {activeSentence && <p aria-live="polite" className="rounded-md border-l-4 border-amber-500 bg-amber-50 px-3 py-2 text-sm font-semibold text-[#17312e]">{activeSentence}</p>}
-                {speechError && <p role="status" className="text-xs font-medium text-rose-800">{speechError}</p>}
-                {!isSpeechSupported && <p role="status" className="text-xs text-[#66736f]">{t.unsupported}</p>}
-                {isSpeechSupported && voices.length === 0 && <p className="text-xs text-[#66736f]">{t.noVoices}</p>}
-              </section>
-
               <button type="button" onClick={resetAll} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-md border border-rose-200 px-4 text-sm font-bold text-rose-800 hover:bg-rose-50">
                 <RotateCcw className="h-4 w-4" aria-hidden="true" />{t.resetAll}
               </button>
@@ -408,6 +286,6 @@ export const AccessibilityTools: React.FC = () => {
           </section>
         </div>
       )}
-    </div>
+    </>
   );
 };
