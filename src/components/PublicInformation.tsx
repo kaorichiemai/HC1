@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AlertTriangle, Bell, CalendarDays, Clock3, MapPin, Stethoscope } from 'lucide-react';
+import { AlertTriangle, Bell, CalendarDays, Clock3, MapPin, Megaphone, Stethoscope } from 'lucide-react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 
 export const PublicInformation: React.FC = () => {
@@ -48,35 +48,63 @@ export const PublicInformation: React.FC = () => {
 
         <div className="mx-auto max-w-[820px] space-y-8">
           <section>
-            <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-white"><Bell className="h-5 w-5 text-emerald-200" />{isFilipino ? 'Mga anunsyo' : 'Announcements'}</h3>
+            <div className="mb-4 flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-emerald-100">
+                <Megaphone className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div>
+                <h3 className="text-lg font-bold text-white">{isFilipino ? 'Mga anunsyo' : 'Announcements'}</h3>
+                <p className="mt-0.5 text-xs text-emerald-100">{isFilipino ? 'Mga pinakabagong balita at pabatid mula sa health center' : 'The latest news and notices from the health center'}</p>
+              </div>
+            </div>
             {updates.length > 0 ? (
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {updates.map((update) => (
-                  <article key={update.id} className="border-b border-white/20 pb-5 last:border-0 last:pb-0">
-                    <h4 className="text-sm font-bold text-white">{isFilipino ? update.titleFil : update.title}</h4>
-                    <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-emerald-50">
-                      {(isFilipino ? update.contentFil : update.content) || (isFilipino ? update.summaryFil : update.summary)}
-                    </p>
+                  <article key={update.id} className="overflow-hidden rounded-xl border border-white/70 bg-white shadow-md shadow-black/10">
                     {update.imageUrl && (
                       <button
                         type="button"
                         onClick={() => setViewingImage({ url: update.imageUrl!, alt: isFilipino ? update.titleFil : update.title })}
                         aria-label={isFilipino ? `Tingnan ang buong larawan: ${update.titleFil}` : `View full image: ${update.title}`}
-                        className="mt-3 block w-full cursor-zoom-in overflow-hidden rounded-md border border-white/30 bg-white"
+                        className="group block w-full cursor-zoom-in overflow-hidden border-b border-[#e1e9e4] bg-[#f3f7f4] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#17645c]"
                       >
                         <img
                           src={update.imageUrl}
                           alt=""
                           loading="lazy"
                           decoding="async"
-                          className="max-h-[28rem] w-full object-contain"
+                          className="h-48 w-full object-contain transition-transform duration-300 group-hover:scale-[1.02] sm:h-64"
                         />
                       </button>
                     )}
+                    <div className="p-4 sm:p-5">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-[#eaf3ee] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#17645c]">
+                          {isFilipino ? update.categoryFil : update.category}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-xs text-[#66736f]">
+                          <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />
+                          {update.date}
+                        </span>
+                      </div>
+                      <h4 className="text-base font-bold leading-snug text-[#123f36] sm:text-lg">
+                        {isFilipino ? update.titleFil : update.title}
+                      </h4>
+                      <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-[#43534d]">
+                        {(isFilipino ? update.contentFil : update.content) || (isFilipino ? update.summaryFil : update.summary)}
+                      </p>
+                      <div className="mt-4 border-t border-[#e7eee9] pt-3 text-xs font-medium text-[#66736f]">
+                        {update.author}
+                      </div>
+                    </div>
                   </article>
                 ))}
               </div>
-            ) : <p className="text-sm text-emerald-50">{isFilipino ? 'Wala pang bagong anunsyo.' : 'There are no current announcements.'}</p>}
+            ) : (
+              <p className="rounded-lg border border-white/15 bg-white/5 px-4 py-5 text-sm text-emerald-50">
+                {isFilipino ? 'Wala pang bagong anunsyo.' : 'There are no current announcements.'}
+              </p>
+            )}
           </section>
 
           <div className="space-y-7">
