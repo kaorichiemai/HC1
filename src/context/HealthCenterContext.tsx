@@ -138,7 +138,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (document.visibilityState === 'visible') void refreshAppointmentRequestAvailability();
     };
     void refreshAppointmentRequestAvailability();
-    const timer = window.setInterval(() => void refreshAppointmentRequestAvailability(), 3000);
+    const timer = window.setInterval(() => void refreshAppointmentRequestAvailability(), 15_000);
     document.addEventListener('visibilitychange', refreshWhenVisible);
     return () => {
       active = false;
@@ -174,7 +174,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (document.visibilityState === 'visible') void loadSiteContent();
     };
     void loadSiteContent();
-    const timer = window.setInterval(() => void loadSiteContent(), 3000);
+    const timer = window.setInterval(() => void loadSiteContent(), 60_000);
     document.addEventListener('visibilitychange', refreshWhenVisible);
     return () => {
       active = false;
@@ -222,7 +222,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
     };
     void refresh();
-    const timer = window.setInterval(() => void refresh(), 3000);
+    const timer = window.setInterval(() => void refresh(), 15_000);
     return () => {
       active = false;
       window.clearInterval(timer);

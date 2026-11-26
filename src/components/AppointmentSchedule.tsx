@@ -52,7 +52,7 @@ export const AppointmentSchedule: React.FC = () => {
     const timer = window.setInterval(() => {
       controller.abort();
       controller = loadSchedule();
-    }, 3000);
+    }, 15_000);
     return () => {
       controller.abort();
       window.clearInterval(timer);

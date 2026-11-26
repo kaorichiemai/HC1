@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth, useUser } from '@clerk/react';
 import { HealthCenterProvider, useHealthCenter } from './context/HealthCenterContext';
 import { Header } from './components/Header';
@@ -103,19 +103,24 @@ export default function App() {
   const { user } = useUser();
   const [accountRole, setAccountRole] = useState<'checking' | 'admin' | 'user' | 'error'>('checking');
   const [roleError, setRoleError] = useState('');
+  const verifiedUserId = useRef<string | null>(null);
+  const userId = user?.id ?? null;
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || !user) {
+    if (!isLoaded || !isSignedIn || !userId) {
       setAccountRole('checking');
       setRoleError('');
+      verifiedUserId.current = null;
       return;
     }
 
     let active = true;
-    setAccountRole('checking');
+    if (verifiedUserId.current !== userId) setAccountRole('checking');
     void (async () => {
       try {
-        const token = await getToken();
+        const token = await getTokenRef.current();
         if (!token) throw new Error('Your Clerk session could not be verified.');
         const response = await fetch('/api/admin?mode=role', {
           headers: { Authorization: `Bearer ${token}` },
@@ -126,6 +131,7 @@ export default function App() {
           throw new Error(data.error || 'Your account role could not be verified.');
         }
         if (!active) return;
+        verifiedUserId.current = userId;
         setAccountRole(data.role);
         setRoleError('');
         if (data.role === 'user' && window.location.pathname === '/admin') {
@@ -141,7 +147,7 @@ export default function App() {
     return () => {
       active = false;
     };
-  }, [getToken, isLoaded, isSignedIn, user]);
+  }, [isLoaded, isSignedIn, userId]);
 
   if (!isLoaded) {
     return (

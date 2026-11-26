@@ -184,7 +184,7 @@ export const OutreachBookingModal: React.FC = () => {
       }
     };
     void loadAvailability();
-    const timer = window.setInterval(() => void loadAvailability(), 3000);
+    const timer = window.setInterval(() => void loadAvailability(), 10_000);
     return () => {
       active = false;
       window.clearInterval(timer);
