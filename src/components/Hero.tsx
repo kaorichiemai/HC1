@@ -21,10 +21,10 @@ export const Hero: React.FC = () => {
         <div className="relative mx-auto w-full max-w-7xl px-5 py-14 sm:px-8 sm:py-14 lg:px-12">
           <div className="absolute right-5 top-4 flex items-center gap-1.5 rounded-md border border-emerald-200/50 bg-emerald-950/60 px-2.5 py-1.5 text-[10px] font-bold leading-tight text-white shadow-lg sm:right-8 sm:top-6 sm:gap-2 sm:px-3 sm:py-2 sm:text-xs lg:right-12" role="status">
             <CalendarDays className="h-3.5 w-3.5 shrink-0 text-emerald-300 sm:h-4 sm:w-4" />
-            {language === 'fil' ? 'TUMATANGGAP NG REQUEST · 24/7' : 'ONLINE REQUESTS · 24/7'}
+            {language === 'fil' ? 'REQUEST NG APPOINTMENT 24/7' : 'APPOINTMENT REQUEST 24/7'}
           </div>
-          <div className="mx-auto max-w-3xl text-center">
-            <h1 className="hero-enter mx-auto max-w-3xl text-3xl font-bold leading-[1.08] text-white sm:text-4xl lg:text-[46px]">
+          <div className="mx-auto max-w-3xl text-center lg:mx-0 lg:text-left">
+            <h1 className="hero-enter mx-auto max-w-3xl text-3xl font-bold leading-[1.08] text-white sm:text-4xl lg:mx-0 lg:text-[46px]">
               Mayor Moises R. Flores Health Center
             </h1>
             <div className="hero-actions mt-7 grid grid-cols-1 gap-3 sm:flex">
@@ -35,9 +35,9 @@ export const Hero: React.FC = () => {
                 View services <ArrowDown className="w-4 h-4" />
               </button>
             </div>
-            <div className="mx-auto mt-5 max-w-2xl space-y-2 text-center text-sm leading-relaxed text-white/90">
-              <p className="flex items-start justify-center gap-2"><MapPin className="mt-0.5 h-4 w-4 shrink-0" /><span>{clinicAddress}</span></p>
-              <p className="flex items-start justify-center gap-2"><Clock3 className="mt-0.5 h-4 w-4 shrink-0" /><span>{clinicHours}</span></p>
+            <div className="mx-auto mt-5 max-w-2xl space-y-2 text-center text-sm leading-relaxed text-white/90 lg:mx-0 lg:text-left">
+              <p className="flex items-start justify-center gap-2 lg:justify-start"><MapPin className="mt-0.5 h-4 w-4 shrink-0" /><span>{clinicAddress}</span></p>
+              <p className="flex items-start justify-center gap-2 lg:justify-start"><Clock3 className="mt-0.5 h-4 w-4 shrink-0" /><span>{clinicHours}</span></p>
             </div>
           </div>
         </div>

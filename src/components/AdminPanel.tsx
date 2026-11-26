@@ -4,7 +4,7 @@ import { CalendarDays, Check, CheckCircle2, ChevronLeft, Clock3, LockKeyhole, Me
 import { AdminCalendar, SlotSetting, SlotSettingsForm } from './AdminCalendar';
 import { AdminContentManager } from './AdminContentManager';
 import { AdminReports } from './AdminReports';
-import { formatAppointmentTime } from '../appointmentSchedule';
+import { formatAppointmentTime, getAppointmentTimeMinutes } from '../appointmentSchedule';
 import centerPhoto from '../assets/images/MR FLORES.png';
 
 interface AppointmentRow {
@@ -61,6 +61,7 @@ export const AdminPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'requests' | 'priority' | 'completed' | 'calendar' | 'content' | 'reports'>('requests');
   const [selectedId, setSelectedId] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [appointmentDateFilter, setAppointmentDateFilter] = useState('');
   const [search, setSearch] = useState('');
   const [chatInput, setChatInput] = useState('');
   const [loading, setLoading] = useState(true);
@@ -79,8 +80,12 @@ export const AdminPanel: React.FC = () => {
         slotSettings?: SlotSetting[];
       };
       if (data.role !== 'admin') throw new Error('This account is not an admin.');
-      setAppointments(data.appointments.filter((appointment) => appointment.status !== 'rejected').slice().sort((first, second) =>
-        second.created_at.localeCompare(first.created_at) || second.id.localeCompare(first.id)));
+      setAppointments(data.appointments
+        .filter((appointment) => appointment.status !== 'rejected')
+        .slice()
+        .sort((first, second) => first.preferred_date.localeCompare(second.preferred_date)
+          || (getAppointmentTimeMinutes(first.preferred_time) ?? 1440) - (getAppointmentTimeMinutes(second.preferred_time) ?? 1440)
+          || first.patient_name.localeCompare(second.patient_name)));
       setMessages(data.messages);
       setSlotSettings(data.slotSettings ?? []);
       setError('');
@@ -113,6 +118,7 @@ export const AdminPanel: React.FC = () => {
       const matchesStatus = activeTab === 'completed'
         || statusFilter === 'all'
         || (statusFilter === 'history' ? appointment.status === 'cancelled' : appointment.status === statusFilter);
+      const matchesDate = !appointmentDateFilter || appointment.preferred_date === appointmentDateFilter;
       const matchesSearch = !query || [
         appointment.patient_name,
         appointment.reference_code,
@@ -123,9 +129,11 @@ export const AdminPanel: React.FC = () => {
         String(appointment.age ?? ''),
         getPriorityCategoryLabels(appointment.priority_categories ?? '').join(' '),
       ].some((value) => value.toLowerCase().includes(query));
-      return inSelectedSection && matchesStatus && matchesSearch;
-    });
-  }, [activeTab, appointments, search, statusFilter]);
+      return inSelectedSection && matchesStatus && matchesDate && matchesSearch;
+    }).sort((first, second) => first.preferred_date.localeCompare(second.preferred_date)
+      || (getAppointmentTimeMinutes(first.preferred_time) ?? 1440) - (getAppointmentTimeMinutes(second.preferred_time) ?? 1440)
+      || first.patient_name.localeCompare(second.patient_name));
+  }, [activeTab, appointmentDateFilter, appointments, search, statusFilter]);
   const displayedAppointments = useMemo(() => activeTab === 'priority'
     ? filteredAppointments.filter((appointment) => getPriorityCategoryLabels(appointment.priority_categories ?? '').length > 0)
     : filteredAppointments, [activeTab, filteredAppointments]);
@@ -261,6 +269,11 @@ export const AdminPanel: React.FC = () => {
                 <Search className="h-4 w-4 shrink-0" />
                 <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search patient or reference" className="min-w-0 flex-1 text-xs text-[#17312e] outline-none" />
               </label>
+              <label className="mt-3 block text-xs font-semibold text-[#66736f]">
+                Filter by appointment date
+                <input type="date" value={appointmentDateFilter} onChange={(event) => setAppointmentDateFilter(event.target.value)} className="mt-1 block min-h-11 w-full border border-[#d9e1dc] bg-white px-3 text-sm text-[#17312e]" />
+              </label>
+              {appointmentDateFilter && <button type="button" onClick={() => setAppointmentDateFilter('')} className="mt-2 min-h-11 px-3 text-xs font-semibold text-[#17645c] hover:bg-[#eaf3ee]">Show all dates</button>}
               {activeTab !== 'completed' && (
                 <div className="mt-3 flex gap-1 overflow-x-auto pb-1">
                   {[

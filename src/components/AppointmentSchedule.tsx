@@ -36,6 +36,7 @@ export const AppointmentSchedule: React.FC = () => {
   const [prioritySlots, setPrioritySlots] = useState<PriorityScheduleSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
 
   useEffect(() => {
     const loadSchedule = () => {
@@ -70,7 +71,7 @@ export const AppointmentSchedule: React.FC = () => {
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
   const priorityCounts = new Map(prioritySlots.map((slot) => [`${slot.date}:${slot.time}`, slot.priorityCount]));
   const regularSlots = slots
-    .filter((slot) => slot.date >= today)
+    .filter((slot) => slot.date >= today && (!dateFilter || slot.date === dateFilter))
     .map((slot) => ({
       ...slot,
       regularCount: Math.max(0, slot.bookedCount - (priorityCounts.get(`${slot.date}:${slot.time}`) ?? 0)),
@@ -79,7 +80,7 @@ export const AppointmentSchedule: React.FC = () => {
     .sort((first, second) => first.date.localeCompare(second.date)
       || (getAppointmentTimeMinutes(first.time) ?? 1440) - (getAppointmentTimeMinutes(second.time) ?? 1440));
   const upcomingPrioritySlots = prioritySlots
-    .filter((slot) => slot.date >= today && slot.priorityCount > 0)
+    .filter((slot) => slot.date >= today && (!dateFilter || slot.date === dateFilter) && slot.priorityCount > 0)
     .sort((first, second) => first.date.localeCompare(second.date)
       || (getAppointmentTimeMinutes(first.time) ?? 1440) - (getAppointmentTimeMinutes(second.time) ?? 1440));
 
@@ -94,6 +95,25 @@ export const AppointmentSchedule: React.FC = () => {
               {isFilipino ? 'MGA NAKATAKDANG APPOINTMENT' : 'UPCOMING APPOINTMENTS'}
             </h2>
           </div>
+        </div>
+
+        <div className="mb-6 flex flex-wrap items-end gap-3">
+          <label htmlFor="schedule-date-filter" className="text-sm font-semibold text-[#52635b]">
+            {isFilipino ? 'I-filter ayon sa petsa' : 'Filter by date'}
+            <input
+              id="schedule-date-filter"
+              type="date"
+              min={today}
+              value={dateFilter}
+              onChange={(event) => setDateFilter(event.target.value)}
+              className="mt-1 block min-h-11 border border-[#d9e1dc] bg-white px-3 text-sm text-[#17312e]"
+            />
+          </label>
+          {dateFilter && (
+            <button type="button" onClick={() => setDateFilter('')} className="min-h-11 px-3 text-sm font-semibold text-[#17645c] hover:bg-[#eaf3ee]">
+              {isFilipino ? 'Ipakita lahat ng petsa' : 'Show all dates'}
+            </button>
+          )}
         </div>
 
         {loading && <p className="border-y border-[#dce7e1] py-5 text-sm text-[#6b7280]">{isFilipino ? 'Nilo-load ang mga kumpirmadong appointment...' : 'Loading accepted appointments...'}</p>}

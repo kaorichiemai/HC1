@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { formatAppointmentTime } from '../appointmentSchedule';
+import { formatAppointmentTime, getAppointmentTimeMinutes } from '../appointmentSchedule';
 
 interface ReportAppointment {
   reference_code: string;
@@ -36,7 +36,9 @@ export const AdminReports: React.FC<{ appointments: ReportAppointment[] }> = ({ 
     && (!toDate || item.preferred_date <= toDate)
     && (status === 'all' || item.status === status)
     && (service === 'all' || item.service_name === service)
-  )), [appointments, fromDate, toDate, status, service]);
+  )).sort((first, second) => first.preferred_date.localeCompare(second.preferred_date)
+    || (getAppointmentTimeMinutes(first.preferred_time) ?? 1440) - (getAppointmentTimeMinutes(second.preferred_time) ?? 1440)
+    || first.patient_name.localeCompare(second.patient_name)), [appointments, fromDate, toDate, status, service]);
 
   const exportCsv = () => {
     const columns: Array<keyof ReportAppointment> = [
