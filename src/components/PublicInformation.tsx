@@ -39,7 +39,40 @@ export const PublicInformation: React.FC = () => {
           <div><strong>{isFilipino ? 'Pabatid sa holiday:' : 'Holiday advisory:'}</strong> {isFilipino ? settings.holidayAdvisoryFil : settings.holidayAdvisory}</div>
         </div>
 
-        <div className="mx-auto grid max-w-[820px] items-start gap-x-8 gap-y-6 md:grid-cols-2">
+        <div className="mx-auto max-w-[820px] space-y-8">
+          <section>
+            <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-[#0f4d3c]"><Bell className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Mga anunsyo' : 'Announcements'}</h3>
+            {updates.length > 0 ? (
+              <div className="space-y-5">
+                {updates.map((update) => (
+                  <article key={update.id} className="border-b border-[#dce7e1] pb-5 last:border-0 last:pb-0">
+                    <h4 className="text-sm font-bold text-[#0f4d3c]">{isFilipino ? update.titleFil : update.title}</h4>
+                    <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-[#374151]">
+                      {(isFilipino ? update.contentFil : update.content) || (isFilipino ? update.summaryFil : update.summary)}
+                    </p>
+                    {update.imageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setViewingImage({ url: update.imageUrl!, alt: isFilipino ? update.titleFil : update.title })}
+                        aria-label={isFilipino ? `Tingnan ang buong larawan: ${update.titleFil}` : `View full image: ${update.title}`}
+                        className="mt-3 block w-full cursor-zoom-in overflow-hidden rounded-md border border-[#dce7e1] bg-white"
+                      >
+                        <img
+                          src={update.imageUrl}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          className="max-h-[28rem] w-full object-contain"
+                        />
+                      </button>
+                    )}
+                  </article>
+                ))}
+              </div>
+            ) : <p className="text-sm text-[#6b7280]">{isFilipino ? 'Wala pang bagong anunsyo.' : 'There are no current announcements.'}</p>}
+          </section>
+
+          <div className="grid items-start gap-x-8 gap-y-6 md:grid-cols-2">
           <section className="min-w-0">
             <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-[#0f4d3c]"><Clock3 className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Oras ng klinika' : 'Clinic hours'}</h3>
             <ul className="bullet-list my-0 text-xs leading-5 text-[#374151]">
@@ -60,23 +93,6 @@ export const PublicInformation: React.FC = () => {
           </section>
 
           <section className="min-w-0">
-            <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-[#0f4d3c]"><Bell className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Mga anunsyo' : 'Announcements'}</h3>
-            {updates.length > 0 ? (
-              <ul className="space-y-2">
-                {updates.map((update) => (
-                  <li key={update.id} className="flex items-start gap-3 border-t border-[#e7eee9] pt-2 first:border-0 first:pt-0">
-                    {update.imageUrl && <button type="button" onClick={() => setViewingImage({ url: update.imageUrl!, alt: isFilipino ? update.titleFil : update.title })} aria-label={isFilipino ? `Tingnan ang buong larawan: ${update.titleFil}` : `View full image: ${update.title}`} className="shrink-0 cursor-zoom-in overflow-hidden rounded-sm bg-[#eaf3ee]"><img src={update.imageUrl} alt="" loading="lazy" decoding="async" className="h-14 w-16 object-cover" /></button>}
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-[#0f4d3c]">{isFilipino ? update.titleFil : update.title}</p>
-                      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[#6b7280]">{isFilipino ? update.summaryFil : update.summary}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : <p className="text-sm text-[#6b7280]">{isFilipino ? 'Wala pang bagong anunsyo.' : 'There are no current announcements.'}</p>}
-          </section>
-
-          <section className="min-w-0">
             <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-[#0f4d3c]"><CalendarDays className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Paparating na outreach' : 'Upcoming outreach'}</h3>
             {outreach.length > 0 ? (
               <ul className="bullet-list my-0 text-xs leading-5 text-[#374151]">
@@ -84,6 +100,7 @@ export const PublicInformation: React.FC = () => {
               </ul>
             ) : <p className="text-sm text-[#6b7280]">{isFilipino ? 'Wala pang naka-iskedyul na outreach.' : 'No outreach programs are currently scheduled.'}</p>}
           </section>
+          </div>
         </div>
       </div>
       {viewingImage && (
