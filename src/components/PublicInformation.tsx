@@ -39,8 +39,9 @@ export const PublicInformation: React.FC = () => {
             </h2>
           </div>
         </div>
+      </div>
 
-        <div className="w-full rounded-xl bg-[#0b3f32] p-5 shadow-lg shadow-[#0b3f32]/15 sm:p-8">
+      <div className="w-full bg-[#0b3f32] px-5 py-5 shadow-lg shadow-[#0b3f32]/15 sm:px-8 sm:py-8 lg:px-12">
           <div className="holiday-advisory" role="note">
             <AlertTriangle className="h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
             <div><strong>{isFilipino ? 'Pabatid sa holiday:' : 'Holiday advisory:'}</strong> {isFilipino ? settings.holidayAdvisoryFil : settings.holidayAdvisory}</div>
@@ -136,7 +137,6 @@ export const PublicInformation: React.FC = () => {
             ) : <p className="text-sm text-emerald-50">{isFilipino ? 'Wala pang naka-iskedyul na outreach.' : 'No outreach programs are currently scheduled.'}</p>}
           </section>
           </div>
-        </div>
         </div>
       </div>
       {viewingImage && createPortal(
