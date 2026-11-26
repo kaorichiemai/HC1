@@ -25,6 +25,8 @@ interface PublicSlotSetting {
 interface UnavailableAppointmentSlot {
   date: string;
   time: string;
+  hasRegularBooking: boolean;
+  hasPriorityBooking: boolean;
 }
 
 interface PendingAppointmentRequest {
@@ -85,7 +87,11 @@ export const OutreachBookingModal: React.FC = () => {
       && (setting.time === time || setting.time === period));
   };
   const isTimeTaken = (time: string) => unavailableSlots.some((slot) => (
-    slot.date === preferredDate && slot.time === time
+    slot.date === preferredDate
+    && slot.time === time
+    && (priorityCategories.length > 0
+      ? slot.hasPriorityBooking
+      : slot.hasRegularBooking || slot.hasPriorityBooking)
   ));
 
   useEffect(() => {
@@ -110,7 +116,7 @@ export const OutreachBookingModal: React.FC = () => {
       && !isTimeTaken(time)
     ));
     if (nextAvailableTime) setPreferredTime(nextAvailableTime);
-  }, [dateBlocked, preferredDate, preferredTime, now, slotSettings, unavailableSlots]);
+  }, [dateBlocked, preferredDate, preferredTime, now, slotSettings, unavailableSlots, priorityCategories]);
 
   useEffect(() => {
     if (selectedProgramForBooking && services.some((service) => service.id === selectedProgramForBooking)) {

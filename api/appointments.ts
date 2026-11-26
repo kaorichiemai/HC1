@@ -194,15 +194,20 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         blocked: Number(row.blocked) === 1,
       }));
       const unavailableResult = await db.execute({
-        sql: `SELECT DISTINCT preferred_date, preferred_time
+        sql: `SELECT preferred_date, preferred_time,
+                     MAX(CASE WHEN priority_categories = '' THEN 1 ELSE 0 END) AS has_regular_booking,
+                     MAX(CASE WHEN priority_categories != '' THEN 1 ELSE 0 END) AS has_priority_booking
               FROM appointment_requests
               WHERE status IN ('pending', 'confirmed') AND preferred_date >= ?
+              GROUP BY preferred_date, preferred_time
               ORDER BY preferred_date ASC, preferred_time ASC`,
         args: [new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(new Date())],
       });
       const unavailableSlots = unavailableResult.rows.map((row) => ({
         date: String(row.preferred_date),
         time: String(row.preferred_time),
+        hasRegularBooking: Number(row.has_regular_booking) === 1,
+        hasPriorityBooking: Number(row.has_priority_booking) === 1,
       }));
       const slotsWithServices = slots.map((slot) => ({
         ...slot,
@@ -346,10 +351,12 @@ export default async function handler(request: ApiRequest, response: ApiResponse
           },
         });
       }
+      const prioritySlotFilter = priorityCategories.length > 0 ? "AND priority_categories != ''" : '';
       const occupiedSlot = await transaction.execute({
         sql: `SELECT 1 FROM appointment_requests
               WHERE preferred_date = ? AND preferred_time = ?
                 AND status IN ('pending', 'confirmed')
+                ${prioritySlotFilter}
               LIMIT 1`,
         args: [preferredDate, preferredTime],
       });
