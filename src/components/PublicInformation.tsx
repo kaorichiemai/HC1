@@ -108,10 +108,10 @@ export const PublicInformation: React.FC = () => {
             )}
           </section>
 
-          <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
           <section className="min-w-0">
-            <h3 className="mb-3 flex items-center gap-2 text-xl font-bold text-white"><Clock3 className="h-5 w-5 text-emerald-200" />{isFilipino ? 'Oras ng klinika' : 'Clinic hours'}</h3>
-            <ul className="bullet-list my-0 text-base leading-7 text-emerald-50">
+            <h3 className="mb-3 flex items-center gap-2 text-xl font-bold text-white lg:text-lg"><Clock3 className="h-5 w-5 text-emerald-200" />{isFilipino ? 'Oras ng klinika' : 'Clinic hours'}</h3>
+            <ul className="bullet-list my-0 text-base leading-7 text-emerald-50 lg:text-sm lg:leading-6">
               <li><strong>{isFilipino ? settings.clinicHoursFil : settings.clinicHours}</strong></li>
               <li>{isFilipino ? settings.doctorHoursFil : settings.doctorHours}</li>
               <li>{isFilipino ? settings.xrayHoursFil : settings.xrayHours}</li>
@@ -120,21 +120,21 @@ export const PublicInformation: React.FC = () => {
           </section>
 
           <section className="min-w-0">
-            <h3 className="mb-3 flex items-center gap-2 text-xl font-bold text-white"><Stethoscope className="h-5 w-5 text-emerald-200" />{isFilipino ? 'Mga serbisyo' : 'Services overview'}</h3>
+            <h3 className="mb-3 flex items-center gap-2 text-xl font-bold text-white lg:text-lg"><Stethoscope className="h-5 w-5 text-emerald-200" />{isFilipino ? 'Mga serbisyo' : 'Services overview'}</h3>
             {featuredServices.length > 0 ? (
-              <ul className="bullet-list my-0 text-base leading-7 text-emerald-50">
+              <ul className="bullet-list my-0 text-base leading-7 text-emerald-50 lg:text-sm lg:leading-6">
                 {featuredServices.map((service) => <li key={service.id}><strong>{isFilipino ? service.titleFil : service.title}</strong>{service.badge ? ` · ${service.badge}` : ''}</li>)}
               </ul>
-            ) : <p className="text-base text-emerald-50">{isFilipino ? 'Wala pang nailathalang serbisyo.' : 'No services have been published yet.'}</p>}
+            ) : <p className="text-base text-emerald-50 lg:text-sm">{isFilipino ? 'Wala pang nailathalang serbisyo.' : 'No services have been published yet.'}</p>}
           </section>
 
           <section className="min-w-0">
-            <h3 className="mb-3 flex items-center gap-2 text-xl font-bold text-white"><CalendarDays className="h-5 w-5 text-emerald-200" />{isFilipino ? 'Paparating na outreach' : 'Upcoming outreach'}</h3>
+            <h3 className="mb-3 flex items-center gap-2 text-xl font-bold text-white lg:text-lg"><CalendarDays className="h-5 w-5 text-emerald-200" />{isFilipino ? 'Paparating na outreach' : 'Upcoming outreach'}</h3>
             {outreach.length > 0 ? (
-              <ul className="bullet-list my-0 text-base leading-7 text-emerald-50">
-                {outreach.map((program) => <li key={program.id}><strong>{isFilipino ? program.titleFil : program.title}</strong><span className="mt-1 flex items-start gap-1.5 text-sm text-emerald-100"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />{program.location}</span></li>)}
+              <ul className="bullet-list my-0 text-base leading-7 text-emerald-50 lg:text-sm lg:leading-6">
+                {outreach.map((program) => <li key={program.id}><strong>{isFilipino ? program.titleFil : program.title}</strong><span className="mt-1 flex items-start gap-1.5 text-sm text-emerald-100 lg:text-xs"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />{program.location}</span></li>)}
               </ul>
-            ) : <p className="text-base text-emerald-50">{isFilipino ? 'Wala pang naka-iskedyul na outreach.' : 'No outreach programs are currently scheduled.'}</p>}
+            ) : <p className="text-base text-emerald-50 lg:text-sm">{isFilipino ? 'Wala pang naka-iskedyul na outreach.' : 'No outreach programs are currently scheduled.'}</p>}
           </section>
           </div>
         </div>
