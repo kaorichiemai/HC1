@@ -1,14 +1,12 @@
 import React, { useCallback, useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { Accessibility, Menu, X, Globe, CalendarDays, LogOut, Mail } from 'lucide-react';
-import centerPhoto from '../assets/images/MR FLORES.png';
 import { useAuth } from '@clerk/react';
 import { AccessibilityTools } from './AccessibilityTools';
 
 export const Header: React.FC = () => {
   const { signOut } = useAuth();
   const {
-    t,
     language,
     toggleLanguage,
     activeSection,
@@ -40,16 +38,7 @@ export const Header: React.FC = () => {
   return (
     <header className="header-enter sticky top-0 z-40 border-b border-[#dce7e1] bg-white/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex h-[68px] items-center justify-between gap-2 sm:gap-6">
-          <a
-            href="#overview"
-            onClick={(e) => { e.preventDefault(); handleNavClick('overview'); }}
-            className="flex min-w-0 shrink items-center gap-2 text-xs font-bold text-[#0f4d3c] transition-colors duration-200 hover:text-[#2c7a5f] sm:gap-3 sm:text-[15px]"
-          >
-            <img src={centerPhoto} alt="Mr. Flores Health Center logo" className="h-9 w-9 shrink-0 rounded-full border border-[#dfe6e1] object-cover sm:h-11 sm:w-11" />
-            <span title={t.brand} className="min-w-0 truncate sm:overflow-visible sm:whitespace-nowrap">Mayor Moises R. Flores <span className="hidden sm:inline">Health Center</span></span>
-          </a>
-
+        <div className="flex h-[68px] items-center justify-end gap-2 sm:gap-6 xl:justify-between">
           <nav className="hidden xl:flex items-center gap-7 text-sm font-medium text-[#6b7280]">
             {navLinks.map((item) => (
               <button
@@ -88,7 +77,7 @@ export const Header: React.FC = () => {
             </button>
             {bookingEnabled && <button onClick={() => setBookingModalOpen(true)} title="Request an appointment" className="px-4 py-2.5 text-sm font-bold text-white bg-[#0f4d3c] hover:bg-[#2c7a5f] rounded-sm transition-colors whitespace-nowrap flex items-center gap-2">
               <CalendarDays className="w-4 h-4" />
-              <span>REQUEST AN APPOINTMENT</span>
+              <span>REQUEST APPOINTMENT</span>
             </button>}
             <button type="button" onClick={() => setMessagesOpen(true)} className="relative p-2 text-[#4b5563] hover:bg-[#eaf3ee] hover:text-[#0f4d3c]" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
               <Mail className="h-5 w-5" />
@@ -163,7 +152,7 @@ export const Header: React.FC = () => {
           <div className="pt-3 border-t border-[#edf2ee]">
             {bookingEnabled && <button onClick={() => { setBookingModalOpen(true); setMobileMenuOpen(false); }} className="min-h-11 w-full py-2.5 px-4 text-sm font-semibold text-white bg-[#0f4d3c] hover:bg-[#2c7a5f] rounded-md flex items-center justify-center gap-2">
               <CalendarDays className="w-4 h-4" />
-              <span>REQUEST AN APPOINTMENT</span>
+              <span>REQUEST APPOINTMENT</span>
             </button>}
             <button type="button" onClick={() => void signOut()} className="mt-2 flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-[#dce7e1] px-4 text-sm font-semibold text-[#4b5563] hover:bg-[#f8faf9]">
               <LogOut className="h-4 w-4" />
