@@ -14,6 +14,8 @@ import { AuthScreen } from './components/AuthScreen';
 import { AdminPanel } from './components/AdminPanel';
 import { UserAppointmentChat } from './components/UserAppointmentChat';
 import patientFlowDiagram from './assets/images/DIAGRAM xd.png';
+import { AccessibilityTools } from './components/AccessibilityTools';
+import { AccessibilityProvider } from './context/AccessibilityContext';
 
 const AppContent: React.FC<{ user: ReturnType<typeof useUser>['user'] }> = ({ user }) => {
   const { activeSection, notificationToast, setNotificationToast, appointmentRequestAvailability, language } = useHealthCenter();
@@ -34,7 +36,9 @@ const AppContent: React.FC<{ user: ReturnType<typeof useUser>['user'] }> = ({ us
   }, [setNotificationToast]);
 
   return (
+    <AccessibilityProvider>
     <div className="public-page-shell min-h-screen flex flex-col text-[#374151] antialiased selection:bg-[#eaf3ee] selection:text-[#0f4d3c]">
+      <a href="#main-content" className="skip-to-content">Skip to main content</a>
       <Header />
       {(appointmentRequestAvailability === 'pending' || appointmentRequestAvailability === 'confirmed') && (
         <div role="status" aria-live="polite" className={`border-b px-4 py-3 ${appointmentRequestAvailability === 'pending' ? 'border-amber-200 bg-amber-50 text-amber-950' : 'border-emerald-200 bg-emerald-50 text-emerald-950'}`}>
@@ -53,7 +57,7 @@ const AppContent: React.FC<{ user: ReturnType<typeof useUser>['user'] }> = ({ us
         </div>
       )}
 
-      <main key={activeSection} className="public-view-enter flex-1">
+      <main id="main-content" key={activeSection} data-speech-content tabIndex={-1} className="public-view-enter flex-1">
         {activeSection === 'clinic-information' ? (
           <PublicInformation />
         ) : activeSection === 'appointment-schedule' ? (
@@ -83,6 +87,7 @@ const AppContent: React.FC<{ user: ReturnType<typeof useUser>['user'] }> = ({ us
 
       <UserAppointmentChat />
       <OutreachBookingModal />
+      <AccessibilityTools />
 
       {notificationToast && (
         <div className="fixed bottom-5 right-5 z-50 bg-[#0f4d3c] text-white px-4 py-3 rounded-md shadow-lg border border-white/10 text-sm font-semibold flex items-center gap-2 max-w-sm animate-fade-in">
@@ -91,6 +96,7 @@ const AppContent: React.FC<{ user: ReturnType<typeof useUser>['user'] }> = ({ us
         </div>
       )}
     </div>
+    </AccessibilityProvider>
   );
 };
 

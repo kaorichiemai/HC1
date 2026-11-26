@@ -13,6 +13,8 @@
     --color-mint: #eaf3ee;
     --color-border: #dce7e1;
     --color-amber: #f4c95d;
+    --accessibility-font-scale: 1;
+    font-size: calc(16px * var(--accessibility-font-scale));
     font-family: 'Inter', sans-serif;
     color: var(--color-body);
     font-synthesis: none;
@@ -108,6 +110,116 @@
     outline: 3px solid rgba(44, 122, 95, 0.45);
     outline-offset: 2px;
   }
+
+  html[data-accessibility-contrast="high"] {
+    --color-body: #000000;
+    --color-light-text: #242424;
+    --color-border: #555555;
+    color: #000000;
+    color-scheme: light;
+  }
+
+  html[data-accessibility-contrast="high"] body,
+  html[data-accessibility-contrast="high"] .public-page-shell {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  html[data-accessibility-contrast="high"] .public-page-shell .site-section-bg :where(p, li, dt, dd, label, .breadcrumb) {
+    color: #111111 !important;
+  }
+
+  html[data-accessibility-contrast="high"] .footer-enter {
+    border-color: #ffffff !important;
+    background: #000000 !important;
+    color: #ffffff !important;
+  }
+
+  html[data-accessibility-contrast="high"] :focus-visible {
+    outline: 4px solid #005fcc;
+    outline-offset: 3px;
+  }
+
+  html[data-accessibility-contrast="smart"] {
+    --color-body: #202020;
+    --color-light-text: #4b5563;
+    --color-border: #9aa79f;
+  }
+
+  html[data-accessibility-text-spacing="true"] body :where(p, li, label, dd, dt) {
+    letter-spacing: 0.04em;
+    word-spacing: 0.12em;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+  }
+
+  html[data-accessibility-dyslexia-font="true"] body,
+  html[data-accessibility-dyslexia-font="true"] body :where(button, input, select, textarea) {
+    font-family: "Trebuchet MS", Arial, sans-serif;
+    letter-spacing: 0.025em;
+  }
+
+  html[data-accessibility-large-cursor="true"] body,
+  html[data-accessibility-large-cursor="true"] body :where(button, a, input, select, textarea, [role="button"]) {
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpath d='M5 3v27l8-8 6 13 5-2-6-12h11z' fill='white' stroke='black' stroke-width='2'/%3E%3C/svg%3E") 5 3, auto;
+  }
+
+  html[data-accessibility-touch-targets="true"] body :where(button, a, input, select, textarea, [role="button"]) {
+    min-height: 48px;
+  }
+
+  html[data-accessibility-highlight-links="true"] body :where(a, button, [role="button"], input, select, textarea) {
+    outline: 2px solid #9a5b00;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px #ffffff;
+  }
+
+  html[data-accessibility-highlight-links="true"] body a {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.18em;
+  }
+
+  html[data-accessibility-reduce-motion="true"] *,
+  html[data-accessibility-reduce-motion="true"] *::before,
+  html[data-accessibility-reduce-motion="true"] *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  @media (prefers-contrast: more), (forced-colors: active) {
+    html[data-accessibility-contrast="smart"] :focus-visible {
+      outline: 3px solid CanvasText;
+    }
+
+    html[data-accessibility-contrast="smart"] button,
+    html[data-accessibility-contrast="smart"] a,
+    html[data-accessibility-contrast="smart"] input,
+    html[data-accessibility-contrast="smart"] select,
+    html[data-accessibility-contrast="smart"] textarea {
+      border-color: CanvasText;
+    }
+  }
+}
+
+.skip-to-content {
+  position: fixed;
+  top: 0.5rem;
+  left: 0.5rem;
+  z-index: 100;
+  transform: translateY(-150%);
+  border-radius: 0.25rem;
+  background: #ffffff;
+  padding: 0.75rem 1rem;
+  color: #0f4d3c;
+  font-weight: 700;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+.skip-to-content:focus {
+  transform: translateY(0);
 }
 
 .public-page-shell {

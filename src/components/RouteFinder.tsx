@@ -4,6 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Bike, CarFront, ChevronDown, ChevronUp, ExternalLink, LocateFixed, MapPin, PersonStanding, RefreshCw } from 'lucide-react';
+import { ListenButton } from './AccessibilityTools';
 
 type TravelMode = 'walking' | 'bicycling' | 'driving' | 'motorcycle';
 type Renderer = 'maplibre' | 'leaflet';
@@ -664,7 +665,7 @@ export const RouteFinder: React.FC = () => {
   const locationStatusColor = origin?.source === 'manual' ? 'bg-teal-300' : origin && origin.accuracy > 250 ? 'bg-amber-300' : origin ? 'bg-emerald-300' : 'bg-slate-400';
 
   return (
-    <section className="route-enter relative z-10 mx-auto w-full max-w-[1500px] px-4 py-3 sm:px-8">
+    <section data-speech-section className="route-enter relative z-10 mx-auto w-full max-w-[1500px] px-4 py-3 sm:px-8">
     <aside aria-label="Live directions map" className="ml-auto max-h-[calc(100dvh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-[360px] overflow-y-auto rounded-sm border border-[#d7dfda] bg-[#fcfdfb] shadow-[0_10px_32px_rgba(23,58,55,0.18)]">
       <header className="flex items-center justify-between gap-3 px-4 py-3 bg-[#0f4d3c] text-white">
         <div className="min-w-0">
@@ -672,6 +673,7 @@ export const RouteFinder: React.FC = () => {
           <div className="text-[11px] font-semibold text-white/90">{destinationName}</div>
           <div className="text-[10px] leading-relaxed text-white/70">{destinationAddress}</div>
           <div className="mt-1 flex items-center gap-1.5 text-[10px] text-white/80"><span className={`h-1.5 w-1.5 rounded-full ${locationStatusColor} ${origin?.source === 'gps' && origin.accuracy <= 250 ? 'animate-pulse' : ''}`} />{locationStatus}</div>
+          <ListenButton className="mt-2 border-white/50 bg-transparent text-white hover:bg-white/10 hover:text-white" />
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <button type="button" onClick={recenterMap} aria-label="Recenter map" title="Recenter map" className="p-2 text-white/85 hover:text-white hover:bg-white/10 rounded-md"><LocateFixed className="w-4 h-4" /></button>

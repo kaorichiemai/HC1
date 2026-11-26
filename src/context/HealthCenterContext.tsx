@@ -90,6 +90,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   useEffect(() => {
     localStorage.setItem('mfhc_language', language);
+    document.documentElement.lang = language === 'fil' ? 'fil' : 'en';
   }, [language]);
 
   const setBookingAvailabilityModal = (open: boolean) => {
