@@ -117,12 +117,16 @@ export const AppointmentSchedule: React.FC = () => {
                       <Clock3 className="h-5 w-5 shrink-0 text-amber-600" />
                       <span className="text-base font-extrabold text-amber-950">{formatAppointmentTime(slot.time)}</span>
                     </div>
-                    <p className="mt-2 text-sm text-amber-900">
-                      <strong>{slot.priorityCount}</strong>{' '}
-                      {isFilipino
-                        ? (slot.priorityCount === 1 ? 'appointment na prayoridad' : 'mga appointment na prayoridad')
-                        : `priority ${slot.priorityCount === 1 ? 'appointment' : 'appointments'}`}
-                    </p>
+                    <div className="mt-4 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+                      <span className="flex h-10 min-w-10 items-center justify-center rounded-full bg-amber-500 px-2 text-lg font-extrabold text-white shadow-sm">
+                        {slot.priorityCount}
+                      </span>
+                      <span className="text-sm font-bold text-amber-950">
+                        {isFilipino
+                          ? (slot.priorityCount === 1 ? 'appointment na prayoridad' : 'mga appointment na prayoridad')
+                          : `priority ${slot.priorityCount === 1 ? 'appointment' : 'appointments'}`}
+                      </span>
+                    </div>
                   </article>
                 ))}
                 {upcomingPrioritySlots.length === 0 && (
@@ -158,12 +162,16 @@ export const AppointmentSchedule: React.FC = () => {
                       <Clock3 className="h-5 w-5 shrink-0 text-[#2c7a5f]" />
                       <span className="text-base font-bold text-[#0f4d3c]">{formatAppointmentTime(slot.time)}</span>
                     </div>
-                    <p className="mt-2 text-sm text-[#6b7280]">
-                      <strong className="text-[#374151]">{slot.regularCount}</strong>{' '}
-                      {isFilipino
-                        ? (slot.regularCount === 1 ? 'regular na appointment' : 'regular na mga appointment')
-                        : `regular ${slot.regularCount === 1 ? 'appointment' : 'appointments'}`}
-                    </p>
+                    <div className="mt-4 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                      <span className="flex h-10 min-w-10 items-center justify-center rounded-full bg-[#17645c] px-2 text-lg font-extrabold text-white shadow-sm">
+                        {slot.regularCount}
+                      </span>
+                      <span className="text-sm font-bold text-[#124d45]">
+                        {isFilipino
+                          ? (slot.regularCount === 1 ? 'regular na appointment' : 'regular na mga appointment')
+                          : `regular ${slot.regularCount === 1 ? 'appointment' : 'appointments'}`}
+                      </span>
+                    </div>
                   </article>
                 ))}
                 {regularSlots.length === 0 && (
