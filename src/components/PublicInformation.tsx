@@ -39,7 +39,7 @@ export const PublicInformation: React.FC = () => {
           <div><strong>{isFilipino ? 'Pabatid sa holiday:' : 'Holiday advisory:'}</strong> {isFilipino ? settings.holidayAdvisoryFil : settings.holidayAdvisory}</div>
         </div>
 
-        <div className="grid items-start gap-3 md:grid-cols-2">
+        <div className="mx-auto grid max-w-5xl items-start gap-3 rounded-xl border border-[#2c7a5f] bg-gradient-to-br from-[#0b3f32] via-[#0f4d3c] to-[#17645c] p-4 shadow-lg shadow-[#0f4d3c]/15 md:grid-cols-2 sm:gap-4 sm:p-6">
           <section className="site-card p-3 sm:p-4">
             <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-[#0f4d3c]"><Clock3 className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Oras ng klinika' : 'Clinic hours'}</h3>
             <ul className="bullet-list my-0 text-xs leading-5 text-[#374151]">
