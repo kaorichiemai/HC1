@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, Bell, CalendarDays, Clock3, MapPin, Megaphone, Stethoscope } from 'lucide-react';
 import { useHealthCenter } from '../context/HealthCenterContext';
+import { BackToHomeButton } from './BackToHomeButton';
 
 export const PublicInformation: React.FC = () => {
   const { language, siteContent, siteContentError } = useHealthCenter();
@@ -30,6 +31,7 @@ export const PublicInformation: React.FC = () => {
     <section id="clinic-information" className="site-section-bg section-enter border-b border-[#dce7e1] py-8 sm:py-10">
       <div className="w-full px-5 sm:px-8 lg:px-12">
         {siteContentError && <p role="status" className="mb-4 border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">{isFilipino ? 'Hindi ma-refresh ang pinakabagong impormasyon ng klinika; ipinapakita ang huling na-save na nilalaman.' : 'Clinic information could not be refreshed; showing the last saved content.'}</p>}
+        <BackToHomeButton />
         <div className="breadcrumb">Home <span aria-hidden="true">/</span> <span className="font-semibold text-[#0f4d3c]">Information</span></div>
         <div className="mb-6">
           <div>

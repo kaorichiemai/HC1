@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useHealthCenter } from '../context/HealthCenterContext';
+import { BackToHomeButton } from './BackToHomeButton';
 import { ServiceDetail } from '../types';
 import { Activity, ArrowRight, Baby, Clock, Heart, MapPin, Pill, ShieldAlert, Smile, Stethoscope, X } from 'lucide-react';
 import animalBiteImage from '../assets/images/ANIMAL BITE.jpg';
@@ -45,6 +46,7 @@ export const ServicesSection: React.FC = () => {
   return (
     <section id="services" className="site-section-bg section-enter services-enter border-b border-[#dce7e1] py-8 sm:py-10">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-12">
+        <BackToHomeButton />
         <div className="breadcrumb">Home <span aria-hidden="true">/</span> <span className="font-semibold text-[#0f4d3c]">Services</span></div>
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-5 mb-6">
           <div className="max-w-2xl">

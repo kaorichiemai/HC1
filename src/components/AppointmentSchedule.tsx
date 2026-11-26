@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CalendarDays, Clock3 } from 'lucide-react';
 import { useHealthCenter } from '../context/HealthCenterContext';
+import { BackToHomeButton } from './BackToHomeButton';
 import { formatAppointmentTime, getAppointmentTimeMinutes } from '../appointmentSchedule';
 
 interface ScheduleSlot {
@@ -85,6 +86,7 @@ export const AppointmentSchedule: React.FC = () => {
   return (
     <section id="appointment-schedule" className="site-section-bg section-enter border-b border-[#dce7e1] py-8 sm:py-10">
       <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
+        <BackToHomeButton />
         <div className="breadcrumb">Home <span aria-hidden="true">/</span> <span className="font-semibold text-[#0f4d3c]">Schedule</span></div>
         <div className="mb-7">
           <div>
