@@ -341,7 +341,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       }
       const status = 'confirmed';
       const appointmentTime = formatAppointmentTime(preferredTime);
-      const message = `This is an automated message. Your appointment for ${serviceName} on ${preferredDate} at ${appointmentTime} has been automatically confirmed. You can view the schedule in your appointment chat.\n\nAwtomatikong mensahe ito. Awtomatikong nakumpirma ang iyong appointment para sa ${serviceName} sa ${preferredDate} nang ${appointmentTime}. Maaari mong tingnan ang iskedyul sa chat ng iyong appointment.`;
+      const message = `This is an automated message.\n\nYour appointment for ${serviceName} on ${preferredDate} at ${appointmentTime} has been automatically confirmed. You can view the schedule in your appointment chat.\n\nFilipino:\nAwtomatikong mensahe ito. Kumpirmado na ang iyong appointment para sa ${serviceName} sa ${preferredDate}, ganap na ${appointmentTime}. Maaari mong tingnan ang iskedyul sa chat ng iyong appointment.`;
       await transaction.execute({
         sql: `INSERT INTO appointment_requests (
           id, owner_uid, reference_code, patient_name, phone, address, chief_complaint, age, priority_categories,
