@@ -120,15 +120,6 @@ export const Header: React.FC = () => {
             </button>
           </div>
         </div>
-        <div className="border-t border-[#edf2ee] px-4 xl:hidden">
-            <nav aria-label="Main navigation" className="grid min-h-11 grid-cols-4">
-              {navLinks.map((item) => (
-                <button key={item.id} onClick={() => handleNavClick(item.id)} className={`min-h-11 min-w-0 border-b-2 px-0.5 text-[9px] font-semibold leading-tight sm:px-2 sm:text-[10px] ${activeSection === item.id ? 'border-[#0f4d3c] text-[#0f4d3c] font-bold' : 'border-transparent text-[#6b7280]'}`}>
-                  {item.label === 'INFORMATION' ? 'Information' : item.label === 'SCHEDULE' ? 'Schedule' : item.label === 'SERVICES' ? 'Services' : 'Home'}
-                </button>
-              ))}
-            </nav>
-        </div>
       </div>
 
       {mobileMenuOpen && (
