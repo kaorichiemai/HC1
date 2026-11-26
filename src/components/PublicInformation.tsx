@@ -72,10 +72,10 @@ export const PublicInformation: React.FC = () => {
             ) : <p className="text-sm text-[#6b7280]">{isFilipino ? 'Wala pang bagong anunsyo.' : 'There are no current announcements.'}</p>}
           </section>
 
-          <div className="grid items-start gap-x-8 gap-y-6 md:grid-cols-2">
+          <div className="space-y-7">
           <section className="min-w-0">
-            <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-[#0f4d3c]"><Clock3 className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Oras ng klinika' : 'Clinic hours'}</h3>
-            <ul className="bullet-list my-0 text-xs leading-5 text-[#374151]">
+            <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-[#0f4d3c]"><Clock3 className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Oras ng klinika' : 'Clinic hours'}</h3>
+            <ul className="bullet-list my-0 text-sm leading-6 text-[#374151]">
               <li><strong>{isFilipino ? settings.clinicHoursFil : settings.clinicHours}</strong></li>
               <li>{isFilipino ? settings.doctorHoursFil : settings.doctorHours}</li>
               <li>{isFilipino ? settings.xrayHoursFil : settings.xrayHours}</li>
@@ -84,18 +84,18 @@ export const PublicInformation: React.FC = () => {
           </section>
 
           <section className="min-w-0">
-            <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-[#0f4d3c]"><Stethoscope className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Mga serbisyo' : 'Services overview'}</h3>
+            <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-[#0f4d3c]"><Stethoscope className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Mga serbisyo' : 'Services overview'}</h3>
             {featuredServices.length > 0 ? (
-              <ul className="bullet-list my-0 text-xs leading-5 text-[#374151]">
+              <ul className="bullet-list my-0 text-sm leading-6 text-[#374151]">
                 {featuredServices.map((service) => <li key={service.id}><strong>{isFilipino ? service.titleFil : service.title}</strong>{service.badge ? ` · ${service.badge}` : ''}</li>)}
               </ul>
             ) : <p className="text-sm text-[#6b7280]">{isFilipino ? 'Wala pang nailathalang serbisyo.' : 'No services have been published yet.'}</p>}
           </section>
 
           <section className="min-w-0">
-            <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-[#0f4d3c]"><CalendarDays className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Paparating na outreach' : 'Upcoming outreach'}</h3>
+            <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-[#0f4d3c]"><CalendarDays className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Paparating na outreach' : 'Upcoming outreach'}</h3>
             {outreach.length > 0 ? (
-              <ul className="bullet-list my-0 text-xs leading-5 text-[#374151]">
+              <ul className="bullet-list my-0 text-sm leading-6 text-[#374151]">
                 {outreach.map((program) => <li key={program.id}><strong>{isFilipino ? program.titleFil : program.title}</strong><span className="mt-1 flex items-start gap-1.5 text-xs text-[#6b7280]"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" />{program.location}</span></li>)}
               </ul>
             ) : <p className="text-sm text-[#6b7280]">{isFilipino ? 'Wala pang naka-iskedyul na outreach.' : 'No outreach programs are currently scheduled.'}</p>}
