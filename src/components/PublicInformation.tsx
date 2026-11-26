@@ -73,7 +73,7 @@ export const PublicInformation: React.FC = () => {
                           alt=""
                           loading="lazy"
                           decoding="async"
-                          className="h-48 w-full object-contain transition-transform duration-300 group-hover:scale-[1.02] sm:h-64"
+                          className="mx-auto block h-auto max-h-[28rem] w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
                         />
                       </button>
                     )}
