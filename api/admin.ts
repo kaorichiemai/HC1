@@ -111,6 +111,10 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
   if (!columnNames.has('priority_categories')) {
     await db.execute("ALTER TABLE appointment_requests ADD COLUMN priority_categories TEXT NOT NULL DEFAULT ''");
   }
+  await db.execute(`
+    UPDATE appointment_requests SET chat_status = 'closed'
+    WHERE status = 'completed' AND chat_status NOT IN ('closed', 'deleted')
+  `);
 }
 
 async function authenticate(request: ApiRequest) {
@@ -496,8 +500,8 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         })
         : action === 'complete'
           ? appointmentId
-            ? await db.execute({ sql: "UPDATE appointment_requests SET status = 'completed', completed_at = ? WHERE id = ? AND status = 'confirmed'", args: [new Date().toISOString(), appointmentId] })
-            : await db.execute({ sql: "UPDATE appointment_requests SET status = 'completed', completed_at = ? WHERE reference_code = ? AND status = 'confirmed'", args: [new Date().toISOString(), referenceCode] })
+            ? await db.execute({ sql: "UPDATE appointment_requests SET status = 'completed', completed_at = ?, chat_status = CASE WHEN chat_status = 'deleted' THEN 'deleted' ELSE 'closed' END WHERE id = ? AND status = 'confirmed'", args: [new Date().toISOString(), appointmentId] })
+            : await db.execute({ sql: "UPDATE appointment_requests SET status = 'completed', completed_at = ?, chat_status = CASE WHEN chat_status = 'deleted' THEN 'deleted' ELSE 'closed' END WHERE reference_code = ? AND status = 'confirmed'", args: [new Date().toISOString(), referenceCode] })
         : appointmentId
           ? await db.execute({ sql: 'UPDATE appointment_requests SET status = ? WHERE id = ?', args: [status, appointmentId] })
           : await db.execute({ sql: 'UPDATE appointment_requests SET status = ? WHERE reference_code = ?', args: [status, referenceCode] });
