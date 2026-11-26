@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
-import { Accessibility, Menu, X, Globe, CalendarDays, LogIn, LogOut, Mail } from 'lucide-react';
+import { Accessibility, Menu, X, CalendarDays, LogIn, LogOut, Mail } from 'lucide-react';
 import { useAuth } from '@clerk/react';
 import { AccessibilityTools } from './AccessibilityTools';
 
@@ -8,7 +8,6 @@ export const Header: React.FC = () => {
   const { signOut, isSignedIn } = useAuth();
   const {
     language,
-    toggleLanguage,
     activeSection,
     setActiveSection,
     setBookingModalOpen,
@@ -68,14 +67,6 @@ export const Header: React.FC = () => {
               <Accessibility className="h-5 w-5" aria-hidden="true" />
               <span>{language === 'fil' ? 'Aksesibilidad' : 'Accessibility'}</span>
             </button>
-            <button
-              onClick={toggleLanguage}
-              className="flex min-h-9 items-center gap-1.5 px-2 text-[#4b5563] hover:text-[#0f4d3c] transition-colors cursor-pointer"
-              title="Toggle English / Filipino"
-            >
-              <Globe className="w-4 h-4" />
-              <span className="text-sm font-medium">{language === 'en' ? 'Filipino' : 'English'}</span>
-            </button>
             {bookingEnabled && <button onClick={() => setBookingModalOpen(true)} title="Request an appointment" className="px-4 py-2.5 text-sm font-bold text-white bg-[#0f4d3c] hover:bg-[#2c7a5f] rounded-sm transition-colors whitespace-nowrap flex items-center gap-2">
               <CalendarDays className="w-4 h-4" />
               <span>REQUEST APPOINTMENT</span>
@@ -108,14 +99,6 @@ export const Header: React.FC = () => {
               className="flex h-11 w-11 items-center justify-center rounded-md text-[#4b5563] hover:bg-[#eaf3ee] hover:text-[#0f4d3c]"
             >
               <Accessibility className="h-5 w-5" aria-hidden="true" />
-            </button>
-            <button
-              onClick={toggleLanguage}
-              className="flex h-11 w-11 items-center justify-center text-[#4b5563] hover:text-[#0f4d3c] xl:hidden"
-              aria-label={language === 'en' ? 'Switch to Filipino' : 'Switch to English'}
-              title={language === 'en' ? 'Filipino' : 'English'}
-            >
-              <Globe className="w-5 h-5" />
             </button>
             {isSignedIn ? (
               <button type="button" onClick={() => setMessagesOpen(true)} className="relative flex h-11 w-11 items-center justify-center text-[#4b5563] hover:text-[#0f4d3c] xl:hidden" aria-label={`Messages${unreadAdminMessageCount > 0 ? `, ${unreadAdminMessageCount} unread` : ''}`} title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}>
