@@ -147,6 +147,13 @@ export const OutreachBookingModal: React.FC = () => {
   }, [bookingModalOpen]);
 
   useEffect(() => {
+    if (!bookingModalOpen || !services.some((service) => service.id === serviceId && service.category === 'maternity')) return;
+    setPriorityCategories((current) => current.includes('pregnant_lactating')
+      ? current
+      : [...current, 'pregnant_lactating']);
+  }, [bookingModalOpen, serviceId, services]);
+
+  useEffect(() => {
     if (!bookingModalOpen) {
       setPendingRequestLoaded(false);
       return;
