@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Accessibility,
   Check,
@@ -142,11 +143,11 @@ export const AccessibilityTools: React.FC<{ open: boolean; onClose: () => void }
     setLanguage('en');
   };
 
-  return (
-    <>
-      {open && (
+  if (!open) return null;
+
+  return createPortal(
         <div
-          className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/45 sm:items-end sm:justify-end sm:p-5"
+          className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/55 sm:items-center sm:justify-center sm:p-5"
           onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}
           data-accessibility-ui
         >
@@ -156,7 +157,7 @@ export const AccessibilityTools: React.FC<{ open: boolean; onClose: () => void }
             role="dialog"
             aria-modal="true"
             aria-labelledby="accessibility-panel-title"
-            className="flex max-h-[92dvh] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-[#cbd8d0] bg-white shadow-2xl sm:max-h-[min(88dvh,780px)] sm:rounded-xl"
+            className="flex max-h-[92dvh] w-full max-w-xl flex-col overflow-hidden rounded-t-2xl border border-[#cbd8d0] bg-white shadow-2xl sm:max-h-[min(92dvh,780px)] sm:rounded-xl"
           >
             <header className="flex shrink-0 items-center justify-between gap-3 border-b border-[#dce7e1] bg-[#0f4d3c] px-4 py-3 text-white sm:px-5">
               <h2 id="accessibility-panel-title" className="text-base font-bold sm:text-lg">{t.title}</h2>
@@ -284,8 +285,7 @@ export const AccessibilityTools: React.FC<{ open: boolean; onClose: () => void }
               </button>
             </div>
           </section>
-        </div>
-      )}
-    </>
+        </div>,
+    document.body,
   );
 };

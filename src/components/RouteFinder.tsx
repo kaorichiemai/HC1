@@ -664,8 +664,8 @@ export const RouteFinder: React.FC = () => {
   const locationStatusColor = origin?.source === 'manual' ? 'bg-teal-300' : origin && origin.accuracy > 250 ? 'bg-amber-300' : origin ? 'bg-emerald-300' : 'bg-slate-400';
 
   return (
-    <section className="route-enter relative z-10 mx-auto w-full max-w-[1500px] px-4 py-3 sm:px-8">
-    <aside aria-label="Live directions map" className="ml-auto max-h-[calc(100dvh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-[520px] overflow-y-auto rounded-sm border border-[#d7dfda] bg-[#fcfdfb] shadow-[0_10px_32px_rgba(23,58,55,0.18)]">
+    <section className="route-enter relative z-10 mx-auto w-full max-w-[1600px] px-4 py-3 sm:px-6 lg:px-8">
+    <aside aria-label="Live directions map" className="mx-auto max-h-[calc(100dvh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-[1440px] overflow-y-auto rounded-sm border border-[#d7dfda] bg-[#fcfdfb] shadow-[0_10px_32px_rgba(23,58,55,0.18)]">
       <header className="flex items-center justify-between gap-3 px-4 py-3 bg-[#0f4d3c] text-white">
         <div className="min-w-0">
           <div className="text-sm font-bold">Navigate to health center</div>
@@ -688,7 +688,7 @@ export const RouteFinder: React.FC = () => {
           ))}
         </div>
         <div className="relative">
-          <div ref={mapElementRef} className="h-[190px] sm:h-[220px] w-full bg-slate-100" aria-label="Dark map showing your live location, the health center, and route" />
+          <div ref={mapElementRef} className="h-[240px] w-full bg-slate-100 sm:h-[340px] lg:h-[400px]" aria-label="Dark map showing your live location, the health center, and route" />
           {pinStartMode && <div className="absolute left-2 right-2 top-2 z-[1000] flex items-center justify-between gap-2 rounded-md bg-white px-3 py-2 text-xs font-semibold text-slate-900 shadow-lg"><span>Tap your actual location on the map</span><button type="button" onClick={() => { setPinStartMode(false); setPinCursor(false); }} className="text-teal-900 underline">Cancel</button></div>}
         </div>
 

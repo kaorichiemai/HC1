@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CalendarDays, Clock3, MapPin } from 'lucide-react';
+import { CalendarDays, Clock3 } from 'lucide-react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { formatAppointmentTime, getAppointmentTimeMinutes } from '../appointmentSchedule';
 
@@ -22,9 +22,8 @@ function dateLabel(value: string) {
 }
 
 export const AppointmentSchedule: React.FC = () => {
-  const { language, siteContent } = useHealthCenter();
+  const { language } = useHealthCenter();
   const isFilipino = language === 'fil';
-  const settings = siteContent.settings;
   const [slots, setSlots] = useState<ScheduleSlot[]>([]);
   const [prioritySlots, setPrioritySlots] = useState<PriorityScheduleSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +77,7 @@ export const AppointmentSchedule: React.FC = () => {
 
   return (
     <section id="appointment-schedule" className="site-section-bg section-enter border-b border-[#dce7e1] py-8 sm:py-10">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-8">
         <div className="breadcrumb">Home <span aria-hidden="true">/</span> <span className="font-semibold text-[#0f4d3c]">Schedule</span></div>
         <div className="mb-7">
           <div>
@@ -92,18 +91,18 @@ export const AppointmentSchedule: React.FC = () => {
         {error && <p role="alert" className="border-y border-[#dce7e1] py-5 text-sm text-rose-800">{error}</p>}
 
         {!loading && !error && (
-          <div className="grid items-start gap-5 lg:grid-cols-2">
+          <div className="grid items-start gap-6 lg:grid-cols-2">
             <section aria-labelledby="priority-schedule-title" className="overflow-hidden rounded-xl border-2 border-amber-400 bg-gradient-to-br from-amber-50 via-white to-orange-50 shadow-lg shadow-amber-100/70">
-              <header className="border-b border-amber-200 bg-amber-100/80 px-5 py-5 sm:px-6">
+              <header className="border-b border-amber-200 bg-amber-100/80 px-6 py-6 sm:px-7">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-md shadow-amber-200">
-                    <CalendarDays className="h-5 w-5" aria-hidden="true" />
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white shadow-md shadow-amber-200">
+                    <CalendarDays className="h-6 w-6" aria-hidden="true" />
                   </span>
                   <div>
-                    <h3 id="priority-schedule-title" className="text-xl font-extrabold tracking-tight text-amber-950">
+                    <h3 id="priority-schedule-title" className="text-2xl font-extrabold tracking-tight text-amber-950">
                       {isFilipino ? 'Mga priority appointment' : 'Priority Appointments'}
                     </h3>
-                    <p className="mt-1 text-xs font-medium text-amber-900/80">
+                    <p className="mt-1 text-sm font-medium text-amber-900/80">
                       {isFilipino ? 'Prayoridad na oras ng appointment' : 'Priority appointment times'}
                     </p>
                   </div>
@@ -114,9 +113,9 @@ export const AppointmentSchedule: React.FC = () => {
                     : 'Times and totals only; patient information stays private.'}
                 </p>
               </header>
-              <div className="grid gap-3 p-4 sm:p-5">
+              <div className="grid gap-4 p-5 sm:p-6">
                 {upcomingPrioritySlots.map((slot) => (
-                  <article key={`${slot.date}-${slot.time}`} className="rounded-lg border border-amber-200 bg-white p-4 shadow-sm">
+                  <article key={`${slot.date}-${slot.time}`} className="rounded-lg border border-amber-200 bg-white p-5 shadow-sm">
                     <p className="text-[11px] font-bold uppercase tracking-wide text-amber-800">{dateLabel(slot.date)}</p>
                     <p className="mt-1 text-xs text-amber-700">{slot.date}</p>
                     <div className="mt-3 flex items-center gap-2 border-t border-amber-100 pt-3">
@@ -132,7 +131,7 @@ export const AppointmentSchedule: React.FC = () => {
                   </article>
                 ))}
                 {upcomingPrioritySlots.length === 0 && (
-                  <p className="rounded-lg border border-dashed border-amber-300 bg-white/70 px-4 py-8 text-center text-sm text-amber-900">
+                  <p className="rounded-lg border border-dashed border-amber-300 bg-white/70 px-5 py-10 text-center text-base text-amber-900">
                     {isFilipino ? 'Wala pang kumpirmadong priority appointment.' : 'No confirmed priority appointments yet.'}
                   </p>
                 )}
@@ -140,24 +139,24 @@ export const AppointmentSchedule: React.FC = () => {
             </section>
 
             <section aria-labelledby="regular-schedule-title" className="overflow-hidden rounded-xl border border-[#dce7e1] bg-white shadow-sm">
-              <header className="border-b border-[#dce7e1] bg-[#f2f7f4] px-5 py-5 sm:px-6">
+              <header className="border-b border-[#dce7e1] bg-[#f2f7f4] px-6 py-6 sm:px-7">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#17645c] text-white">
-                    <CalendarDays className="h-5 w-5" aria-hidden="true" />
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#17645c] text-white">
+                    <CalendarDays className="h-6 w-6" aria-hidden="true" />
                   </span>
                   <div>
-                    <h3 id="regular-schedule-title" className="text-xl font-bold text-[#0f4d3c]">
+                    <h3 id="regular-schedule-title" className="text-2xl font-bold text-[#0f4d3c]">
                       {isFilipino ? 'Mga regular na appointment' : 'Regular Appointments'}
                     </h3>
-                    <p className="mt-1 text-xs font-medium text-[#66736f]">
+                    <p className="mt-1 text-sm font-medium text-[#66736f]">
                       {isFilipino ? 'Iba pang kumpirmadong appointment' : 'Other confirmed appointments'}
                     </p>
                   </div>
                 </div>
               </header>
-              <div className="grid gap-3 p-4 sm:p-5">
+              <div className="grid gap-4 p-5 sm:p-6">
                 {regularSlots.map((slot) => (
-                  <article key={`${slot.date}-${slot.time}`} className="rounded-lg border border-[#dce7e1] bg-white p-4">
+                  <article key={`${slot.date}-${slot.time}`} className="rounded-lg border border-[#dce7e1] bg-white p-5">
                     <p className="text-[11px] font-bold uppercase tracking-wide text-[#2c7a5f]">{dateLabel(slot.date)}</p>
                     <p className="mt-1 text-xs text-[#66736f]">{slot.date}</p>
                     <div className="mt-3 flex items-center gap-2 border-t border-[#e7eee9] pt-3">
@@ -173,18 +172,12 @@ export const AppointmentSchedule: React.FC = () => {
                   </article>
                 ))}
                 {regularSlots.length === 0 && (
-                  <p className="rounded-lg border border-dashed border-[#cbd8d0] bg-[#f8faf9] px-4 py-8 text-center text-sm text-[#66736f]">
+                  <p className="rounded-lg border border-dashed border-[#cbd8d0] bg-[#f8faf9] px-5 py-10 text-center text-base text-[#66736f]">
                     {isFilipino ? 'Wala pang kumpirmadong regular na appointment.' : 'No confirmed regular appointments yet.'}
                   </p>
                 )}
               </div>
             </section>
-          </div>
-        )}
-        {!loading && !error && (
-          <div className="mt-5 flex flex-wrap items-start gap-x-8 gap-y-3 border-t border-[#dce7e1] pt-4 text-xs text-[#6b7280]">
-            <span className="flex items-start gap-2"><Clock3 className="mt-0.5 h-4 w-4 text-[#2c7a5f]" />{isFilipino ? settings.clinicHoursFil : settings.clinicHours}</span>
-            <span className="flex items-start gap-2"><MapPin className="mt-0.5 h-4 w-4 text-[#2c7a5f]" />{isFilipino ? settings.clinicAddressFil : settings.clinicAddress}</span>
           </div>
         )}
       </div>
