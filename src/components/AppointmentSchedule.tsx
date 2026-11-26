@@ -7,12 +7,19 @@ interface ScheduleSlot {
   date: string;
   time: string;
   bookedCount: number;
+  services: ScheduleService[];
 }
 
 interface PriorityScheduleSlot {
   date: string;
   time: string;
   priorityCount: number;
+  services: ScheduleService[];
+}
+
+interface ScheduleService {
+  id: string;
+  name: string;
 }
 
 function dateLabel(value: string) {
@@ -22,7 +29,7 @@ function dateLabel(value: string) {
 }
 
 export const AppointmentSchedule: React.FC = () => {
-  const { language } = useHealthCenter();
+  const { language, siteContent } = useHealthCenter();
   const isFilipino = language === 'fil';
   const [slots, setSlots] = useState<ScheduleSlot[]>([]);
   const [prioritySlots, setPrioritySlots] = useState<PriorityScheduleSlot[]>([]);
@@ -117,15 +124,27 @@ export const AppointmentSchedule: React.FC = () => {
                       <Clock3 className="h-5 w-5 shrink-0 text-amber-600" />
                       <span className="text-base font-extrabold text-amber-950">{formatAppointmentTime(slot.time)}</span>
                     </div>
-                    <div className="mt-4 flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
-                      <span className="flex h-10 min-w-10 items-center justify-center rounded-full bg-amber-500 px-2 text-lg font-extrabold text-white shadow-sm">
-                        {slot.priorityCount}
-                      </span>
-                      <span className="text-sm font-bold text-amber-950">
-                        {isFilipino
-                          ? (slot.priorityCount === 1 ? 'appointment na prayoridad' : 'mga appointment na prayoridad')
-                          : `priority ${slot.priorityCount === 1 ? 'appointment' : 'appointments'}`}
-                      </span>
+                    <div className="mt-4 space-y-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                      <p className="text-xs font-bold uppercase tracking-wide text-amber-900">
+                        {isFilipino ? 'Mga serbisyo at itinalagang pangkat' : 'Services and care team'}
+                      </p>
+                      {slot.services.map((service) => {
+                        const serviceDetails = siteContent.services.find((item) => item.id === service.id);
+                        const careTeam = serviceDetails?.keyPersonnel ?? [];
+                        return (
+                          <div key={service.id} className="border-t border-amber-200 pt-2">
+                            <p className="text-sm font-bold text-amber-950">
+                              {isFilipino && serviceDetails?.titleFil ? serviceDetails.titleFil : service.name}
+                            </p>
+                            <p className="mt-1 text-xs leading-relaxed text-amber-900">
+                              <span className="font-semibold">{isFilipino ? 'Pangkat:' : 'Care team:'}</span>{' '}
+                              {careTeam.length > 0
+                                ? careTeam.join(', ')
+                                : (isFilipino ? 'Makipag-ugnayan sa health center para sa pagtatalaga.' : 'Contact the health center for the team assignment.')}
+                            </p>
+                          </div>
+                        );
+                      })}
                     </div>
                   </article>
                 ))}
@@ -162,15 +181,27 @@ export const AppointmentSchedule: React.FC = () => {
                       <Clock3 className="h-5 w-5 shrink-0 text-[#2c7a5f]" />
                       <span className="text-base font-bold text-[#0f4d3c]">{formatAppointmentTime(slot.time)}</span>
                     </div>
-                    <div className="mt-4 flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5">
-                      <span className="flex h-10 min-w-10 items-center justify-center rounded-full bg-[#17645c] px-2 text-lg font-extrabold text-white shadow-sm">
-                        {slot.regularCount}
-                      </span>
-                      <span className="text-sm font-bold text-[#124d45]">
-                        {isFilipino
-                          ? (slot.regularCount === 1 ? 'regular na appointment' : 'regular na mga appointment')
-                          : `regular ${slot.regularCount === 1 ? 'appointment' : 'appointments'}`}
-                      </span>
+                    <div className="mt-4 space-y-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                      <p className="text-xs font-bold uppercase tracking-wide text-[#124d45]">
+                        {isFilipino ? 'Mga serbisyo at itinalagang pangkat' : 'Services and care team'}
+                      </p>
+                      {slot.services.map((service) => {
+                        const serviceDetails = siteContent.services.find((item) => item.id === service.id);
+                        const careTeam = serviceDetails?.keyPersonnel ?? [];
+                        return (
+                          <div key={service.id} className="border-t border-emerald-200 pt-2">
+                            <p className="text-sm font-bold text-[#124d45]">
+                              {isFilipino && serviceDetails?.titleFil ? serviceDetails.titleFil : service.name}
+                            </p>
+                            <p className="mt-1 text-xs leading-relaxed text-[#315d53]">
+                              <span className="font-semibold">{isFilipino ? 'Pangkat:' : 'Care team:'}</span>{' '}
+                              {careTeam.length > 0
+                                ? careTeam.join(', ')
+                                : (isFilipino ? 'Makipag-ugnayan sa health center para sa pagtatalaga.' : 'Contact the health center for the team assignment.')}
+                            </p>
+                          </div>
+                        );
+                      })}
                     </div>
                   </article>
                 ))}

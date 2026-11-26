@@ -161,6 +161,25 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         time: String(row.preferred_time),
         priorityCount: Number(row.priority_count),
       }));
+      const serviceAppointments = await db.execute(`
+        SELECT preferred_date, preferred_time, service_id, service_name, priority_categories
+        FROM appointment_requests
+        WHERE status = 'confirmed'
+        ORDER BY preferred_date ASC, preferred_time ASC, service_name ASC
+      `);
+      const regularServicesBySlot = new Map<string, Array<{ id: string; name: string }>>();
+      const priorityServicesBySlot = new Map<string, Array<{ id: string; name: string }>>();
+      for (const appointment of serviceAppointments.rows) {
+        const key = `${String(appointment.preferred_date)}:${String(appointment.preferred_time)}`;
+        const isPriority = String(appointment.priority_categories ?? '').trim() !== '';
+        const servicesBySlot = isPriority ? priorityServicesBySlot : regularServicesBySlot;
+        const services = servicesBySlot.get(key) ?? [];
+        const serviceId = String(appointment.service_id);
+        if (!services.some((service) => service.id === serviceId)) {
+          services.push({ id: serviceId, name: String(appointment.service_name) });
+          servicesBySlot.set(key, services);
+        }
+      }
       const settingResult = await db.execute({
         sql: `SELECT appointment_date, time_slot, capacity, blocked
               FROM appointment_slot_settings
@@ -185,15 +204,23 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         date: String(row.preferred_date),
         time: String(row.preferred_time),
       }));
+      const slotsWithServices = slots.map((slot) => ({
+        ...slot,
+        services: regularServicesBySlot.get(`${slot.date}:${slot.time}`) ?? [],
+      }));
+      const prioritySlotsWithServices = prioritySlots.map((slot) => ({
+        ...slot,
+        services: priorityServicesBySlot.get(`${slot.date}:${slot.time}`) ?? [],
+      }));
 
       if (decoded) {
         const appointments = await db.execute({
           sql: `SELECT * FROM appointment_requests WHERE owner_uid = ? ORDER BY preferred_date ASC, preferred_time ASC`,
           args: [decoded.sub],
         });
-        return response.status(200).json({ slots, prioritySlots, slotSettings, unavailableSlots, appointments: appointments.rows });
+        return response.status(200).json({ slots: slotsWithServices, prioritySlots: prioritySlotsWithServices, slotSettings, unavailableSlots, appointments: appointments.rows });
       }
-      return response.status(200).json({ slots, prioritySlots, slotSettings, unavailableSlots });
+      return response.status(200).json({ slots: slotsWithServices, prioritySlots: prioritySlotsWithServices, slotSettings, unavailableSlots });
     } catch {
       return response.status(500).json({ error: 'Schedule data could not be loaded.' });
     }
