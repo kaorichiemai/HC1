@@ -131,6 +131,16 @@ export const OutreachBookingModal: React.FC = () => {
   }, [services, serviceId]);
 
   useEffect(() => {
+    const isMaternityService = services.find((service) => service.id === serviceId)?.category === 'maternity';
+    setPriorityCategories((current) => {
+      if (isMaternityService) {
+        return current.includes('pregnant_lactating') ? current : [...current, 'pregnant_lactating'];
+      }
+      return current.filter((category) => category !== 'pregnant_lactating');
+    });
+  }, [serviceId, services]);
+
+  useEffect(() => {
     if (!bookingModalOpen) {
       setReceipt(null);
       setError('');
@@ -145,13 +155,6 @@ export const OutreachBookingModal: React.FC = () => {
       setFormStep(1);
     }
   }, [bookingModalOpen]);
-
-  useEffect(() => {
-    if (!bookingModalOpen || !services.some((service) => service.id === serviceId && service.category === 'maternity')) return;
-    setPriorityCategories((current) => current.includes('pregnant_lactating')
-      ? current
-      : [...current, 'pregnant_lactating']);
-  }, [bookingModalOpen, serviceId, services]);
 
   useEffect(() => {
     if (!bookingModalOpen) {
