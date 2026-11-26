@@ -3,7 +3,6 @@ import { useAuth } from '@clerk/react';
 import { CalendarDays, Check, CheckCircle2, ChevronLeft, Clock3, LockKeyhole, MessageCircle, Search, Send, Trash2 } from 'lucide-react';
 import { AdminCalendar, SlotSetting, SlotSettingsForm } from './AdminCalendar';
 import { AdminContentManager } from './AdminContentManager';
-import { AdminReports } from './AdminReports';
 import { formatAppointmentTime, getAppointmentTimeMinutes } from '../appointmentSchedule';
 import centerPhoto from '../assets/images/MR FLORES.png';
 
@@ -53,12 +52,34 @@ function getPriorityCategoryLabels(value: string) {
     .map((category) => priorityCategoryLabels[category]);
 }
 
+function exportCompletedAppointments(appointments: AppointmentRow[]) {
+  const columns: Array<keyof AppointmentRow> = [
+    'reference_code', 'patient_name', 'phone', 'email', 'address', 'chief_complaint', 'age', 'priority_categories',
+    'zone', 'service_name', 'preferred_date', 'preferred_time', 'status', 'created_at', 'completed_at',
+  ];
+  const csvCell = (value: string) => {
+    const safeValue = /^[\s]*[=+\-@]/.test(value) ? `'${value}` : value;
+    return `"${safeValue.replaceAll('"', '""')}"`;
+  };
+  const rows = [
+    columns.map((column) => csvCell(column.replaceAll('_', ' '))).join(','),
+    ...appointments.map((appointment) => columns.map((column) => csvCell(String(appointment[column] ?? ''))).join(',')),
+  ];
+  const blob = new Blob([`\uFEFF${rows.join('\r\n')}`], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `completed-medical-history-${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export const AdminPanel: React.FC = () => {
   const { getToken, signOut } = useAuth();
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [slotSettings, setSlotSettings] = useState<SlotSetting[]>([]);
-  const [activeTab, setActiveTab] = useState<'requests' | 'priority' | 'completed' | 'calendar' | 'content' | 'reports'>('requests');
+  const [activeTab, setActiveTab] = useState<'requests' | 'priority' | 'completed' | 'calendar' | 'content'>('requests');
   const [selectedId, setSelectedId] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [appointmentDateFilter, setAppointmentDateFilter] = useState('');
@@ -240,9 +261,8 @@ export const AdminPanel: React.FC = () => {
             { id: 'completed', label: `Completed appointments (${counts.completed})` },
             { id: 'calendar', label: 'Calendar & availability' },
             { id: 'content', label: 'Website content' },
-            { id: 'reports', label: 'Reports & export' },
           ].map(({ id, label }) => (
-            <button key={id} type="button" onClick={() => { setActiveTab(id as 'requests' | 'priority' | 'completed' | 'calendar' | 'content' | 'reports'); setSelectedId(''); }} className={`min-h-11 shrink-0 rounded-sm px-3 py-2.5 text-xs font-bold sm:px-4 sm:text-sm ${activeTab === id ? 'bg-[#0f4d3c] text-white' : 'text-[#66736f] hover:bg-[#f2f7f4] hover:text-[#0f4d3c]'}`}>{label}</button>
+            <button key={id} type="button" onClick={() => { setActiveTab(id as 'requests' | 'priority' | 'completed' | 'calendar' | 'content'); setSelectedId(''); }} className={`min-h-11 shrink-0 rounded-sm px-3 py-2.5 text-xs font-bold sm:px-4 sm:text-sm ${activeTab === id ? 'bg-[#0f4d3c] text-white' : 'text-[#66736f] hover:bg-[#f2f7f4] hover:text-[#0f4d3c]'}`}>{label}</button>
           ))}
         </nav>
 
@@ -256,15 +276,18 @@ export const AdminPanel: React.FC = () => {
           />
         ) : activeTab === 'content' ? (
           <AdminContentManager />
-        ) : activeTab === 'reports' ? (
-          <AdminReports appointments={appointments} />
         ) : (
         <section className="grid min-w-0 overflow-hidden rounded-md border border-[#dce7e1] bg-white shadow-sm lg:min-h-[640px] lg:grid-cols-[350px_minmax(0,1fr)]">
           <aside className={`${selected ? 'hidden lg:block' : ''} min-w-0 border-b border-[#dce7e1] lg:border-b-0 lg:border-r`}>
             <div className="border-b border-[#edf1ee] p-4">
               <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-bold">{activeTab === 'priority' ? 'Priority appointments' : activeTab === 'completed' ? 'Completed appointment requests' : 'Appointment requests'}</h2><span className="text-xs text-[#66736f]">{displayedAppointments.length} shown</span></div>
               {activeTab === 'priority' && <p className="mb-3 text-xs leading-relaxed text-[#66736f]">Requests marked PWD, senior citizen, or pregnant/lactating are listed here for staff attention.</p>}
-              {activeTab === 'completed' && <p className="mb-3 text-xs leading-relaxed text-[#66736f]">Completed requests are archived here and removed from the appointment request and priority lists.</p>}
+              {activeTab === 'completed' && (
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs leading-relaxed text-[#66736f]">Completed requests are archived here and removed from the appointment request and priority lists.</p>
+                  <button type="button" onClick={() => exportCompletedAppointments(displayedAppointments)} disabled={displayedAppointments.length === 0} className="min-h-11 rounded-sm bg-[#0f4d3c] px-4 text-xs font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-50">Export completed records ({displayedAppointments.length})</button>
+                </div>
+              )}
               <label className="flex h-10 items-center gap-2 border border-[#d9e1dc] px-3 text-[#66736f] focus-within:border-[#17645c]">
                 <Search className="h-4 w-4 shrink-0" />
                 <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search patient or reference" className="min-w-0 flex-1 text-xs text-[#17312e] outline-none" />
