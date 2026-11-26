@@ -39,8 +39,8 @@ export const PublicInformation: React.FC = () => {
           <div><strong>{isFilipino ? 'Pabatid sa holiday:' : 'Holiday advisory:'}</strong> {isFilipino ? settings.holidayAdvisoryFil : settings.holidayAdvisory}</div>
         </div>
 
-        <div className="mx-auto grid max-w-5xl items-start gap-3 rounded-xl border border-[#2c7a5f] bg-gradient-to-br from-[#0b3f32] via-[#0f4d3c] to-[#17645c] p-4 shadow-lg shadow-[#0f4d3c]/15 md:grid-cols-2 sm:gap-4 sm:p-6">
-          <section className="site-card p-3 sm:p-4">
+        <div className="mx-auto grid max-w-[820px] items-start gap-x-8 gap-y-6 md:grid-cols-2">
+          <section className="min-w-0">
             <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-[#0f4d3c]"><Clock3 className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Oras ng klinika' : 'Clinic hours'}</h3>
             <ul className="bullet-list my-0 text-xs leading-5 text-[#374151]">
               <li><strong>{isFilipino ? settings.clinicHoursFil : settings.clinicHours}</strong></li>
@@ -50,7 +50,7 @@ export const PublicInformation: React.FC = () => {
             </ul>
           </section>
 
-          <section className="site-card p-3 sm:p-4">
+          <section className="min-w-0">
             <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-[#0f4d3c]"><Stethoscope className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Mga serbisyo' : 'Services overview'}</h3>
             {featuredServices.length > 0 ? (
               <ul className="bullet-list my-0 text-xs leading-5 text-[#374151]">
@@ -59,7 +59,7 @@ export const PublicInformation: React.FC = () => {
             ) : <p className="text-sm text-[#6b7280]">{isFilipino ? 'Wala pang nailathalang serbisyo.' : 'No services have been published yet.'}</p>}
           </section>
 
-          <section className="site-card p-3 sm:p-4">
+          <section className="min-w-0">
             <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-[#0f4d3c]"><Bell className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Mga anunsyo' : 'Announcements'}</h3>
             {updates.length > 0 ? (
               <ul className="space-y-2">
@@ -76,7 +76,7 @@ export const PublicInformation: React.FC = () => {
             ) : <p className="text-sm text-[#6b7280]">{isFilipino ? 'Wala pang bagong anunsyo.' : 'There are no current announcements.'}</p>}
           </section>
 
-          <section className="site-card p-3 sm:p-4">
+          <section className="min-w-0">
             <h3 className="mb-2 flex items-center gap-2 text-base font-bold text-[#0f4d3c]"><CalendarDays className="h-5 w-5 text-[#2c7a5f]" />{isFilipino ? 'Paparating na outreach' : 'Upcoming outreach'}</h3>
             {outreach.length > 0 ? (
               <ul className="bullet-list my-0 text-xs leading-5 text-[#374151]">
