@@ -40,13 +40,13 @@ export const PublicInformation: React.FC = () => {
           </div>
         </div>
 
-        <div className="mx-auto max-w-5xl rounded-xl bg-[#0b3f32] p-5 shadow-lg shadow-[#0b3f32]/15 sm:p-8">
+        <div className="w-full rounded-xl bg-[#0b3f32] p-5 shadow-lg shadow-[#0b3f32]/15 sm:p-8">
           <div className="holiday-advisory" role="note">
             <AlertTriangle className="h-5 w-5 shrink-0 text-amber-700" aria-hidden="true" />
             <div><strong>{isFilipino ? 'Pabatid sa holiday:' : 'Holiday advisory:'}</strong> {isFilipino ? settings.holidayAdvisoryFil : settings.holidayAdvisory}</div>
           </div>
 
-        <div className="mx-auto max-w-[820px] space-y-8">
+        <div className="space-y-8">
           <section>
             <div className="mb-4 flex items-center gap-3">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-emerald-100">
@@ -73,7 +73,7 @@ export const PublicInformation: React.FC = () => {
                           alt=""
                           loading="lazy"
                           decoding="async"
-                          className="mx-auto block h-auto max-h-[28rem] w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+                          className="mx-auto block h-auto w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
                         />
                       </button>
                     )}
@@ -107,7 +107,7 @@ export const PublicInformation: React.FC = () => {
             )}
           </section>
 
-          <div className="space-y-7">
+          <div className="mx-auto max-w-[820px] space-y-7">
           <section className="min-w-0">
             <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-white"><Clock3 className="h-5 w-5 text-emerald-200" />{isFilipino ? 'Oras ng klinika' : 'Clinic hours'}</h3>
             <ul className="bullet-list my-0 text-sm leading-6 text-emerald-50">
