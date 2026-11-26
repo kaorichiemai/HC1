@@ -82,12 +82,8 @@ export const AppointmentSchedule: React.FC = () => {
         <div className="breadcrumb">Home <span aria-hidden="true">/</span> <span className="font-semibold text-[#0f4d3c]">Schedule</span></div>
         <div className="mb-7">
           <div>
-            <div className="mb-2 flex items-center gap-2 text-xs font-bold text-[#2c7a5f]">
-              <CalendarDays className="h-4 w-4" />
-              {isFilipino ? 'Mga kumpirmadong appointment' : 'Confirmed appointments'}
-            </div>
-            <h2 className="text-2xl font-bold text-[#0f4d3c] sm:text-3xl">
-              {isFilipino ? 'Iskedyul ng appointment' : 'Appointment Schedule'}
+            <h2 className="text-2xl font-bold uppercase text-[#0f4d3c] sm:text-3xl">
+              {isFilipino ? 'MGA NAKATAKDANG APPOINTMENT' : 'UPCOMING APPOINTMENTS'}
             </h2>
           </div>
         </div>
