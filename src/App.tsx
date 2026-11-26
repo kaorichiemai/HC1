@@ -40,7 +40,7 @@ const AppContent: React.FC<{ user: ReturnType<typeof useUser>['user'] }> = ({ us
       <a href="#main-content" className="skip-to-content">Skip to main content</a>
       <Header />
       {(appointmentRequestAvailability === 'pending' || appointmentRequestAvailability === 'confirmed') && (
-        <div role="status" aria-live="polite" className={`border-b px-4 py-3 ${appointmentRequestAvailability === 'pending' ? 'border-amber-200 bg-amber-50 text-amber-950' : 'border-emerald-200 bg-emerald-50 text-emerald-950'}`}>
+        <div role="status" aria-live="polite" className={`hidden border-b px-4 py-3 sm:block ${appointmentRequestAvailability === 'pending' ? 'border-amber-200 bg-amber-50 text-amber-950' : 'border-emerald-200 bg-emerald-50 text-emerald-950'}`}>
           <div className="mx-auto flex max-w-7xl items-start gap-2.5 text-sm">
             {appointmentRequestAvailability === 'pending'
               ? <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />

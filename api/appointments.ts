@@ -292,6 +292,12 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     || new Set(priorityCategories).size !== priorityCategories.length) {
     return response.status(400).json({ error: 'Choose valid priority categories.' });
   }
+  if (age < 60 && priorityCategories.includes('senior_citizen')) {
+    return response.status(400).json({ error: 'Senior citizen priority is available to patients aged 60 and above.' });
+  }
+  if (age >= 60 && !priorityCategories.includes('senior_citizen')) {
+    priorityCategories.push('senior_citizen');
+  }
   if (!zones.has(zone)) return response.status(400).json({ error: 'Select a valid zone or barangay.' });
   if (!/^[a-zA-Z0-9_-]{1,80}$/.test(serviceId)) return response.status(400).json({ error: 'Select a valid service.' });
   if (!dateIsValid || preferredDate < earliestAppointmentDate) {

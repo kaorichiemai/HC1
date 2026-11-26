@@ -421,7 +421,25 @@ export const OutreachBookingModal: React.FC = () => {
               </div>
               <div>
                 <label htmlFor="appointment-age" className="mb-1 block text-sm font-semibold text-slate-800">{isFilipino ? 'Edad' : 'Age'} *</label>
-                <input id="appointment-age" required type="number" min={0} max={120} step={1} inputMode="numeric" value={age} onChange={(event) => setAge(event.target.value)} className="min-h-12 w-full rounded-md border border-slate-300 px-3.5 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700" />
+                <input
+                  id="appointment-age"
+                  required
+                  type="number"
+                  min={0}
+                  max={120}
+                  step={1}
+                  inputMode="numeric"
+                  value={age}
+                  onChange={(event) => {
+                    const nextAge = event.target.value;
+                    const qualifiesAsSenior = nextAge !== '' && Number(nextAge) >= 60;
+                    setAge(nextAge);
+                    setPriorityCategories((current) => qualifiesAsSenior
+                      ? current.includes('senior_citizen') ? current : [...current, 'senior_citizen']
+                      : current.filter((category) => category !== 'senior_citizen'));
+                  }}
+                  className="min-h-12 w-full rounded-md border border-slate-300 px-3.5 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700"
+                />
               </div>
               <fieldset className="sm:col-span-2 rounded-md border border-slate-300 p-3">
                 <legend className="px-1 text-sm font-semibold text-slate-800">{isFilipino ? 'Priority category (opsyonal; piliin lahat ng naaangkop)' : 'Priority category (optional; select all that apply)'}</legend>
@@ -430,11 +448,15 @@ export const OutreachBookingModal: React.FC = () => {
                     <label key={value} className="flex min-h-11 items-center gap-2 text-sm text-slate-700">
                       <input
                         type="checkbox"
-                        checked={priorityCategories.includes(value)}
-                        onChange={(event) => setPriorityCategories((current) => event.target.checked
-                          ? [...current, value]
-                          : current.filter((category) => category !== value))}
-                        className="h-4 w-4 shrink-0 accent-teal-800"
+                        checked={value === 'senior_citizen' ? Number(age) >= 60 : priorityCategories.includes(value)}
+                        disabled={value === 'senior_citizen' && (!age || Number(age) < 60)}
+                        onChange={(event) => {
+                          if (value === 'senior_citizen') return;
+                          setPriorityCategories((current) => event.target.checked
+                            ? [...current, value]
+                            : current.filter((category) => category !== value));
+                        }}
+                        className="h-4 w-4 shrink-0 accent-teal-800 disabled:cursor-not-allowed disabled:opacity-50"
                       />
                       {label}
                     </label>
