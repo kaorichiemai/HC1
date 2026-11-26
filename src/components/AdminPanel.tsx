@@ -278,7 +278,6 @@ export const AdminPanel: React.FC = () => {
                 <div className="mt-3 flex gap-1 overflow-x-auto pb-1">
                   {[
                     ['all', 'All'],
-                    ['pending', 'Pending'],
                     ['confirmed', 'Accepted'],
                     ['history', 'Cancelled'],
                   ].map(([value, label]) => (
