@@ -8,6 +8,8 @@ interface ReportAppointment {
   email: string;
   address: string | null;
   chief_complaint: string | null;
+  age: number | null;
+  priority_categories: string;
   zone: string;
   service_name: string;
   preferred_date: string;
@@ -38,7 +40,7 @@ export const AdminReports: React.FC<{ appointments: ReportAppointment[] }> = ({ 
 
   const exportCsv = () => {
     const columns: Array<keyof ReportAppointment> = [
-      'reference_code', 'patient_name', 'phone', 'address', 'chief_complaint', 'email', 'zone',
+      'reference_code', 'patient_name', 'phone', 'address', 'chief_complaint', 'age', 'priority_categories', 'email', 'zone',
       'service_name', 'preferred_date', 'preferred_time', 'status', 'created_at', 'completed_at',
     ];
     const rows = [

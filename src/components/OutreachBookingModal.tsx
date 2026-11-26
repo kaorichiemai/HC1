@@ -29,6 +29,12 @@ interface PendingAppointmentRequest {
   status: 'pending' | 'confirmed';
 }
 
+const priorityCategoryOptions = [
+  { value: 'pwd', label: 'Person with disability (PWD)' },
+  { value: 'senior_citizen', label: 'Senior citizen' },
+  { value: 'pregnant_lactating', label: 'Pregnant or lactating' },
+] as const;
+
 export const OutreachBookingModal: React.FC = () => {
   const { getToken } = useAuth();
   const {
@@ -45,8 +51,10 @@ export const OutreachBookingModal: React.FC = () => {
   const [serviceId, setServiceId] = useState('checkup');
   const [patientName, setPatientName] = useState('');
   const [phone, setPhone] = useState('');
+  const [age, setAge] = useState('');
   const [address, setAddress] = useState('');
   const [chiefComplaint, setChiefComplaint] = useState('');
+  const [priorityCategories, setPriorityCategories] = useState<string[]>([]);
   const [zone, setZone] = useState('San Pedro');
   const [now, setNow] = useState(() => new Date());
   const [preferredDate, setPreferredDate] = useState(() => getEarliestAppointmentDate());
@@ -106,8 +114,10 @@ export const OutreachBookingModal: React.FC = () => {
       setError('');
       setPatientName('');
       setPhone('');
+      setAge('');
       setAddress('');
       setChiefComplaint('');
+      setPriorityCategories([]);
       setPrivacyConsent(false);
       setAttendanceConsent(false);
       setFormStep(1);
@@ -177,6 +187,10 @@ export const OutreachBookingModal: React.FC = () => {
   const handleClose = () => setBookingModalOpen(false);
 
   const handleContinueToSchedule = () => {
+    if (!attendanceConsent) {
+      setError(isFilipino ? 'Lagyan ng tsek ang mahalagang paalala bago magpatuloy.' : 'Check the important reminder before continuing.');
+      return;
+    }
     if (appointmentFormRef.current?.reportValidity()) {
       setError('');
       setFormStep(2);
@@ -218,8 +232,10 @@ export const OutreachBookingModal: React.FC = () => {
         body: JSON.stringify({
           patientName,
           phone,
+          age: Number(age),
           address,
           chiefComplaint,
+          priorityCategories,
           zone,
           serviceId,
           preferredDate,
@@ -378,6 +394,28 @@ export const OutreachBookingModal: React.FC = () => {
                   <option>San Pedro</option><option>Magtanggol</option><option>Tabacalera</option>
                 </select>
               </div>
+              <div>
+                <label htmlFor="appointment-age" className="mb-1 block text-sm font-semibold text-slate-800">{isFilipino ? 'Edad' : 'Age'} *</label>
+                <input id="appointment-age" required type="number" min={0} max={120} step={1} inputMode="numeric" value={age} onChange={(event) => setAge(event.target.value)} className="min-h-12 w-full rounded-md border border-slate-300 px-3.5 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700" />
+              </div>
+              <fieldset className="sm:col-span-2 rounded-md border border-slate-300 p-3">
+                <legend className="px-1 text-sm font-semibold text-slate-800">{isFilipino ? 'Priority category (opsyonal; piliin lahat ng naaangkop)' : 'Priority category (optional; select all that apply)'}</legend>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {priorityCategoryOptions.map(({ value, label }) => (
+                    <label key={value} className="flex min-h-11 items-center gap-2 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={priorityCategories.includes(value)}
+                        onChange={(event) => setPriorityCategories((current) => event.target.checked
+                          ? [...current, value]
+                          : current.filter((category) => category !== value))}
+                        className="h-4 w-4 shrink-0 accent-teal-800"
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
               <div className="sm:col-span-2">
                 <label htmlFor="appointment-chief-complaint" className="mb-1 block text-sm font-semibold text-slate-800">{isFilipino ? 'Pangunahing reklamo o dahilan ng pagbisita' : 'Chief complaint'} *</label>
                 <textarea id="appointment-chief-complaint" required minLength={2} maxLength={2000} rows={4} value={chiefComplaint} onChange={(event) => setChiefComplaint(event.target.value)} placeholder={isFilipino ? 'Ilarawan nang maikli ang iyong nararamdaman o serbisyong kailangan.' : 'Briefly describe your concern or the service you need.'} className="w-full resize-y rounded-md border border-slate-300 px-3.5 py-3 text-base focus:outline-none focus:ring-2 focus:ring-teal-700" />
@@ -389,7 +427,7 @@ export const OutreachBookingModal: React.FC = () => {
                 </label>
               </div>
               <div className="sm:col-span-2">
-                <button type="button" onClick={handleContinueToSchedule} className="mt-1 min-h-12 w-full rounded-sm bg-[#0f4d3c] px-4 py-3 text-base font-bold text-white hover:bg-[#2c7a5f]">
+                <button type="button" disabled={!attendanceConsent} onClick={handleContinueToSchedule} className="mt-1 min-h-12 w-full rounded-sm bg-[#0f4d3c] px-4 py-3 text-base font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-60">
                   {isFilipino ? 'Magpatuloy sa schedule' : 'Continue to schedule'}
                 </button>
               </div>
@@ -412,7 +450,7 @@ export const OutreachBookingModal: React.FC = () => {
               <div className="sm:col-span-2">
                 <label className="flex items-start gap-3 border-t border-slate-200 pt-4 text-sm leading-relaxed text-slate-600">
                   <input type="checkbox" required checked={privacyConsent} onChange={(event) => setPrivacyConsent(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-teal-800" />
-                  <span>{isFilipino ? 'Pumapayag akong gamitin ng health center staff ang aking contact details para suriin at sagutin ang appointment request na ito.' : 'I agree that health center staff may use my contact details to review and respond to this appointment request.'}</span>
+                  <span>{isFilipino ? 'Pumapayag akong gamitin ng kawani ng health center ang aking personal at pangkalusugang impormasyon, kabilang ang detalye ng appointment at pangunahing reklamo, upang suriin at tugunan ang request na ito.' : 'I agree that health center staff may use my personal and health information, including appointment details and chief complaint, to review and respond to this request.'}</span>
                 </label>
               </div>
             </div>}

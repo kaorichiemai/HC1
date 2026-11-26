@@ -20,6 +20,7 @@ type ApiResponse = ServerResponse & {
 
 const zones = new Set(['San Pedro', 'Magtanggol', 'Tabacalera']);
 const preferredTimes = new Set(APPOINTMENT_TIME_SLOTS);
+const priorityCategoryOptions = new Set(['pwd', 'senior_citizen', 'pregnant_lactating']);
 
 let database: ReturnType<typeof createClient> | undefined;
 
@@ -60,6 +61,8 @@ async function ensureAppointmentTable(db: ReturnType<typeof createClient>) {
       email TEXT,
       address TEXT NOT NULL,
       chief_complaint TEXT NOT NULL,
+      age INTEGER NOT NULL,
+      priority_categories TEXT NOT NULL DEFAULT '',
       attendance_consent INTEGER NOT NULL DEFAULT 0,
       zone TEXT NOT NULL,
       service_id TEXT NOT NULL,
@@ -92,6 +95,12 @@ async function ensureAppointmentTable(db: ReturnType<typeof createClient>) {
   }
   if (!columnNames.has('attendance_consent')) {
     await db.execute('ALTER TABLE appointment_requests ADD COLUMN attendance_consent INTEGER NOT NULL DEFAULT 0');
+  }
+  if (!columnNames.has('age')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN age INTEGER');
+  }
+  if (!columnNames.has('priority_categories')) {
+    await db.execute("ALTER TABLE appointment_requests ADD COLUMN priority_categories TEXT NOT NULL DEFAULT ''");
   }
   await db.execute(`
     CREATE TABLE IF NOT EXISTS appointment_slot_settings (
@@ -188,6 +197,8 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   const phone = text(body.phone, 32);
   const address = text(body.address, 250);
   const chiefComplaint = text(body.chiefComplaint, 2000);
+  const age = body.age;
+  const priorityCategories = body.priorityCategories;
   const zone = text(body.zone, 40);
   const serviceId = text(body.serviceId, 40);
   const preferredDate = text(body.preferredDate, 10);
@@ -218,6 +229,14 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   if (phoneDigits.length < 7) return response.status(400).json({ error: 'Enter a contact number with at least 7 digits.' });
   if (address.length < 5) return response.status(400).json({ error: 'Enter a valid home address.' });
   if (chiefComplaint.length < 2) return response.status(400).json({ error: 'Describe your chief complaint or reason for the visit.' });
+  if (typeof age !== 'number' || !Number.isInteger(age) || age < 0 || age > 120) {
+    return response.status(400).json({ error: 'Enter a valid age from 0 to 120.' });
+  }
+  if (!Array.isArray(priorityCategories)
+    || priorityCategories.some((category) => typeof category !== 'string' || !priorityCategoryOptions.has(category))
+    || new Set(priorityCategories).size !== priorityCategories.length) {
+    return response.status(400).json({ error: 'Choose valid priority categories.' });
+  }
   if (!zones.has(zone)) return response.status(400).json({ error: 'Select a valid zone or barangay.' });
   if (!/^[a-zA-Z0-9_-]{1,80}$/.test(serviceId)) return response.status(400).json({ error: 'Select a valid service.' });
   if (!dateIsValid || preferredDate < earliestAppointmentDate) {
@@ -291,10 +310,11 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       const message = `Your appointment for ${serviceName} on ${preferredDate} at ${appointmentTime} has been automatically confirmed. You can view this schedule in your appointment chat.\n\nAwtomatikong nakumpirma ang iyong appointment para sa ${serviceName} sa ${preferredDate}, ${appointmentTime}. Makikita ang schedule sa iyong appointment chat.`;
       await transaction.execute({
         sql: `INSERT INTO appointment_requests (
-          id, owner_uid, reference_code, patient_name, phone, address, chief_complaint, zone, service_id,
-          service_name, preferred_date, preferred_time, privacy_consent, attendance_consent, status, chat_status, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 'open', ?)`,
-        args: [id, ownerUid, referenceCode, patientName, phone, address, chiefComplaint, zone, serviceId, serviceName, preferredDate, preferredTime, body.attendanceConsent ? 1 : 0, status, createdAt],
+          id, owner_uid, reference_code, patient_name, phone, address, chief_complaint, age, priority_categories,
+          zone, service_id, service_name, preferred_date, preferred_time, privacy_consent,
+          attendance_consent, status, chat_status, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 'open', ?)`,
+        args: [id, ownerUid, referenceCode, patientName, phone, address, chiefComplaint, age, priorityCategories.join(','), zone, serviceId, serviceName, preferredDate, preferredTime, body.attendanceConsent ? 1 : 0, status, createdAt],
       });
       await transaction.execute({
         sql: `INSERT INTO appointment_messages

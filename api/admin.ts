@@ -42,6 +42,8 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
       email TEXT,
       address TEXT,
       chief_complaint TEXT,
+      age INTEGER,
+      priority_categories TEXT NOT NULL DEFAULT '',
       attendance_consent INTEGER NOT NULL DEFAULT 0,
       zone TEXT NOT NULL,
       service_id TEXT NOT NULL,
@@ -102,6 +104,12 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
   }
   if (!columnNames.has('attendance_consent')) {
     await db.execute('ALTER TABLE appointment_requests ADD COLUMN attendance_consent INTEGER NOT NULL DEFAULT 0');
+  }
+  if (!columnNames.has('age')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN age INTEGER');
+  }
+  if (!columnNames.has('priority_categories')) {
+    await db.execute("ALTER TABLE appointment_requests ADD COLUMN priority_categories TEXT NOT NULL DEFAULT ''");
   }
 }
 
