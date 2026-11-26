@@ -40,6 +40,9 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
       patient_name TEXT NOT NULL,
       phone TEXT NOT NULL,
       email TEXT,
+      address TEXT,
+      chief_complaint TEXT,
+      attendance_consent INTEGER NOT NULL DEFAULT 0,
       zone TEXT NOT NULL,
       service_id TEXT NOT NULL,
       service_name TEXT NOT NULL,
@@ -90,6 +93,15 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
   }
   if (!columnNames.has('completed_at')) {
     await db.execute('ALTER TABLE appointment_requests ADD COLUMN completed_at TEXT');
+  }
+  if (!columnNames.has('address')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN address TEXT');
+  }
+  if (!columnNames.has('chief_complaint')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN chief_complaint TEXT');
+  }
+  if (!columnNames.has('attendance_consent')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN attendance_consent INTEGER NOT NULL DEFAULT 0');
   }
 }
 

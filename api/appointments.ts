@@ -58,6 +58,9 @@ async function ensureAppointmentTable(db: ReturnType<typeof createClient>) {
       patient_name TEXT NOT NULL,
       phone TEXT NOT NULL,
       email TEXT,
+      address TEXT NOT NULL,
+      chief_complaint TEXT NOT NULL,
+      attendance_consent INTEGER NOT NULL DEFAULT 0,
       zone TEXT NOT NULL,
       service_id TEXT NOT NULL,
       service_name TEXT NOT NULL,
@@ -80,6 +83,15 @@ async function ensureAppointmentTable(db: ReturnType<typeof createClient>) {
   }
   if (!columnNames.has('completed_at')) {
     await db.execute('ALTER TABLE appointment_requests ADD COLUMN completed_at TEXT');
+  }
+  if (!columnNames.has('address')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN address TEXT');
+  }
+  if (!columnNames.has('chief_complaint')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN chief_complaint TEXT');
+  }
+  if (!columnNames.has('attendance_consent')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN attendance_consent INTEGER NOT NULL DEFAULT 0');
   }
   await db.execute(`
     CREATE TABLE IF NOT EXISTS appointment_slot_settings (
@@ -174,7 +186,8 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     : {};
   const patientName = text(body.patientName, 120);
   const phone = text(body.phone, 32);
-  const email = text(body.email, 254).toLowerCase();
+  const address = text(body.address, 250);
+  const chiefComplaint = text(body.chiefComplaint, 2000);
   const zone = text(body.zone, 40);
   const serviceId = text(body.serviceId, 40);
   const preferredDate = text(body.preferredDate, 10);
@@ -203,7 +216,8 @@ export default async function handler(request: ApiRequest, response: ApiResponse
 
   if (patientName.length < 2) return response.status(400).json({ error: 'Enter a valid full name.' });
   if (phoneDigits.length < 7) return response.status(400).json({ error: 'Enter a contact number with at least 7 digits.' });
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return response.status(400).json({ error: 'Enter a valid email address or leave it blank.' });
+  if (address.length < 5) return response.status(400).json({ error: 'Enter a valid home address.' });
+  if (chiefComplaint.length < 2) return response.status(400).json({ error: 'Describe your chief complaint or reason for the visit.' });
   if (!zones.has(zone)) return response.status(400).json({ error: 'Select a valid zone or barangay.' });
   if (!/^[a-zA-Z0-9_-]{1,80}$/.test(serviceId)) return response.status(400).json({ error: 'Select a valid service.' });
   if (!dateIsValid || preferredDate < earliestAppointmentDate) {
@@ -214,6 +228,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     return response.status(400).json({ error: `Choose an appointment time that has not passed today. Today's date is available until 2:00 PM (Philippines time).` });
   }
   if (body.privacyConsent !== true) return response.status(400).json({ error: 'Please agree to the contact and privacy consent.' });
+  if (body.attendanceConsent !== true) return response.status(400).json({ error: 'Please acknowledge the appointment attendance reminder.' });
 
   const db = getDatabase();
   if (!db) return response.status(503).json({ error: 'Appointment requests are temporarily unavailable.' });
@@ -276,10 +291,10 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       const message = `Your appointment for ${serviceName} on ${preferredDate} at ${appointmentTime} has been automatically confirmed. You can view this schedule in your appointment chat.\n\nAwtomatikong nakumpirma ang iyong appointment para sa ${serviceName} sa ${preferredDate}, ${appointmentTime}. Makikita ang schedule sa iyong appointment chat.`;
       await transaction.execute({
         sql: `INSERT INTO appointment_requests (
-          id, owner_uid, reference_code, patient_name, phone, email, zone, service_id,
-          service_name, preferred_date, preferred_time, privacy_consent, status, chat_status, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, 'open', ?)`,
-        args: [id, ownerUid, referenceCode, patientName, phone, email || null, zone, serviceId, serviceName, preferredDate, preferredTime, status, createdAt],
+          id, owner_uid, reference_code, patient_name, phone, address, chief_complaint, zone, service_id,
+          service_name, preferred_date, preferred_time, privacy_consent, attendance_consent, status, chat_status, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 'open', ?)`,
+        args: [id, ownerUid, referenceCode, patientName, phone, address, chiefComplaint, zone, serviceId, serviceName, preferredDate, preferredTime, body.attendanceConsent ? 1 : 0, status, createdAt],
       });
       await transaction.execute({
         sql: `INSERT INTO appointment_messages

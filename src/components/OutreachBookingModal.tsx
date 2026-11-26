@@ -45,12 +45,14 @@ export const OutreachBookingModal: React.FC = () => {
   const [serviceId, setServiceId] = useState('checkup');
   const [patientName, setPatientName] = useState('');
   const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  const [address, setAddress] = useState('');
+  const [chiefComplaint, setChiefComplaint] = useState('');
   const [zone, setZone] = useState('San Pedro');
   const [now, setNow] = useState(() => new Date());
   const [preferredDate, setPreferredDate] = useState(() => getEarliestAppointmentDate());
   const [preferredTime, setPreferredTime] = useState('09:00');
   const [privacyConsent, setPrivacyConsent] = useState(false);
+  const [attendanceConsent, setAttendanceConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [availabilityError, setAvailabilityError] = useState('');
@@ -104,8 +106,10 @@ export const OutreachBookingModal: React.FC = () => {
       setError('');
       setPatientName('');
       setPhone('');
-      setEmail('');
+      setAddress('');
+      setChiefComplaint('');
       setPrivacyConsent(false);
+      setAttendanceConsent(false);
       setFormStep(1);
     }
   }, [bookingModalOpen]);
@@ -214,12 +218,14 @@ export const OutreachBookingModal: React.FC = () => {
         body: JSON.stringify({
           patientName,
           phone,
-          email,
+          address,
+          chiefComplaint,
           zone,
           serviceId,
           preferredDate,
           preferredTime,
           privacyConsent,
+          attendanceConsent,
         }),
       });
       const responseBody = await response.text();
@@ -363,14 +369,24 @@ export const OutreachBookingModal: React.FC = () => {
                 <input id="appointment-phone" required type="tel" inputMode="tel" autoComplete="tel" minLength={7} maxLength={32} value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="09XX XXX XXXX" className="min-h-12 w-full rounded-md border border-slate-300 px-3.5 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700" />
               </div>
               <div>
-                <label htmlFor="appointment-email" className="mb-1 block text-sm font-semibold text-slate-800">{t.formEmail}</label>
-                <input id="appointment-email" type="email" autoComplete="email" maxLength={254} value={email} onChange={(event) => setEmail(event.target.value)} className="min-h-12 w-full rounded-md border border-slate-300 px-3.5 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700" />
+                <label htmlFor="appointment-address" className="mb-1 block text-sm font-semibold text-slate-800">{isFilipino ? 'Tirahan' : 'Address'} *</label>
+                <input id="appointment-address" required minLength={5} maxLength={250} autoComplete="street-address" value={address} onChange={(event) => setAddress(event.target.value)} placeholder={isFilipino ? 'House number, street, at subdivision' : 'House number, street, and subdivision'} className="min-h-12 w-full rounded-md border border-slate-300 px-3.5 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700" />
               </div>
               <div>
                 <label htmlFor="appointment-zone" className="mb-1 block text-sm font-semibold text-slate-800">{t.formZone} *</label>
                 <select id="appointment-zone" required value={zone} onChange={(event) => setZone(event.target.value)} className="min-h-12 w-full rounded-md border border-slate-300 bg-white px-3.5 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700">
                   <option>San Pedro</option><option>Magtanggol</option><option>Tabacalera</option>
                 </select>
+              </div>
+              <div className="sm:col-span-2">
+                <label htmlFor="appointment-chief-complaint" className="mb-1 block text-sm font-semibold text-slate-800">{isFilipino ? 'Pangunahing reklamo o dahilan ng pagbisita' : 'Chief complaint'} *</label>
+                <textarea id="appointment-chief-complaint" required minLength={2} maxLength={2000} rows={4} value={chiefComplaint} onChange={(event) => setChiefComplaint(event.target.value)} placeholder={isFilipino ? 'Ilarawan nang maikli ang iyong nararamdaman o serbisyong kailangan.' : 'Briefly describe your concern or the service you need.'} className="w-full resize-y rounded-md border border-slate-300 px-3.5 py-3 text-base focus:outline-none focus:ring-2 focus:ring-teal-700" />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="flex items-start gap-3 border border-amber-300 bg-amber-50 p-3 text-sm leading-relaxed text-amber-950">
+                  <input type="checkbox" required checked={attendanceConsent} onChange={(event) => setAttendanceConsent(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-teal-800" />
+                  <span><strong className="font-bold">{isFilipino ? 'Mahalagang paalala: ' : 'Important reminder: '}</strong>{isFilipino ? 'Nauunawaan kong makakansela ang appointment ko kapag hindi ako dumating sa takdang oras, at kailangan kong magsumite muli ng request.' : 'I understand that missing my appointment will cancel it, and I’ll need to submit a new request.'}</span>
+                </label>
               </div>
               <div className="sm:col-span-2">
                 <button type="button" onClick={handleContinueToSchedule} className="mt-1 min-h-12 w-full rounded-sm bg-[#0f4d3c] px-4 py-3 text-base font-bold text-white hover:bg-[#2c7a5f]">
@@ -411,7 +427,7 @@ export const OutreachBookingModal: React.FC = () => {
                 <button type="button" onClick={() => { setError(''); setFormStep(1); }} className="min-h-11 flex-1 rounded-md border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:flex-none">{isFilipino ? 'Bumalik' : 'Back'}</button>
                 <button type="button" onClick={handleClose} className="min-h-11 flex-1 rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:flex-none">{isFilipino ? 'Kanselahin' : 'Cancel'}</button>
               </div>
-              <button type="submit" disabled={submitting || !canSubmitAppointment || !selectedService || !privacyConsent} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#0f4d3c] px-5 py-2.5 text-base font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"><CalendarDays className="h-4 w-4" />{submitting ? (isFilipino ? 'Ipinapadala...' : 'Sending...') : (isFilipino ? 'Ipadala ang request' : 'Send request')}</button>
+              <button type="submit" disabled={submitting || !canSubmitAppointment || !selectedService || !privacyConsent || !attendanceConsent} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#0f4d3c] px-5 py-2.5 text-base font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"><CalendarDays className="h-4 w-4" />{submitting ? (isFilipino ? 'Ipinapadala...' : 'Sending...') : (isFilipino ? 'Ipadala ang request' : 'Send request')}</button>
             </div>}
           </form>
         )}

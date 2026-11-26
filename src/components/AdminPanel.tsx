@@ -14,6 +14,9 @@ interface AppointmentRow {
   patient_name: string;
   phone: string;
   email: string;
+  address: string | null;
+  chief_complaint: string | null;
+  attendance_consent: number;
   zone: string;
   service_name: string;
   preferred_date: string;
@@ -280,7 +283,8 @@ export const AdminPanel: React.FC = () => {
                     {selected.completed_at && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Marked completed</dt><dd className="mt-1 font-medium">{new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(selected.completed_at))}</dd></div>}
                     <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Barangay</dt><dd className="mt-1 font-medium">{selected.zone}</dd></div>
                     <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Contact number</dt><dd className="mt-1 font-medium">{selected.phone}</dd></div>
-                    {selected.email && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Email</dt><dd className="mt-1 break-all font-medium">{selected.email}</dd></div>}
+                    {selected.address && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Address</dt><dd className="mt-1 break-words font-medium">{selected.address}</dd></div>}
+                    {selected.chief_complaint && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Chief complaint</dt><dd className="mt-1 whitespace-pre-wrap break-words font-medium">{selected.chief_complaint}</dd></div>}
                   </dl>
                   <div className="mt-5 grid gap-2">
                     <button type="button" disabled={selected.status !== 'pending'} onClick={() => void performAction('approve', selected)} className="flex min-h-11 items-center justify-center gap-2 bg-[#17645c] px-2 text-sm font-bold text-white hover:bg-[#104f49] disabled:cursor-not-allowed disabled:opacity-50"><Check className="h-4 w-4 shrink-0" />Accept request</button>
