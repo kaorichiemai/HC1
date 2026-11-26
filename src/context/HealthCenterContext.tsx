@@ -34,6 +34,9 @@ interface HealthCenterContextType {
   submitContact: (data: { name: string; phone: string; email: string; zone: string; topic: string; message: string }) => ContactSubmission;
   bookingModalOpen: boolean;
   setBookingModalOpen: (open: boolean) => void;
+  authModalOpen: boolean;
+  setAuthModalOpen: (open: boolean) => void;
+  isSignedIn: boolean;
   messagesOpen: boolean;
   setMessagesOpen: (open: boolean) => void;
   appointmentRequestAvailability: 'checking' | 'available' | 'pending' | 'confirmed' | 'error';
@@ -52,7 +55,7 @@ interface HealthCenterContextType {
 const HealthCenterContext = createContext<HealthCenterContextType | undefined>(undefined);
 
 export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem('mfhc_language');
     return (saved === 'fil' || saved === 'en') ? saved : 'en';
@@ -75,7 +78,8 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [messagesOpen, setMessagesOpen] = useState(false);
-  const [appointmentRequestAvailability, setAppointmentRequestAvailability] = useState<'checking' | 'available' | 'pending' | 'confirmed' | 'error'>('checking');
+  const [appointmentRequestAvailability, setAppointmentRequestAvailability] = useState<'checking' | 'available' | 'pending' | 'confirmed' | 'error'>(() => isSignedIn ? 'checking' : 'available');
+  const [authModalOpen, setAuthModalOpenState] = useState(false);
   const [siteContent, setSiteContent] = useState<PublicSiteContent>(() => ({
     services: SERVICES_DATA,
     news: NEWS_UPDATES,
@@ -85,7 +89,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [siteContentError, setSiteContentError] = useState('');
   const [unreadAdminMessageCount, setUnreadAdminMessageCount] = useState(0);
   const [unreadMessagesError, setUnreadMessagesError] = useState('');
-  const [selectedProgramForBooking, setSelectedProgramForBooking] = useState<string | null>(null);
+  const [selectedProgramForBooking, setSelectedProgramForBooking] = useState<string | null>(() => sessionStorage.getItem('mfhc_booking_program'));
   const [notificationToast, setNotificationToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -93,9 +97,27 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
     document.documentElement.lang = language === 'fil' ? 'fil' : 'en';
   }, [language]);
 
+  const setAuthModalOpen = (open: boolean) => {
+    if (!open) {
+      sessionStorage.removeItem('mfhc_booking_after_signin');
+      sessionStorage.removeItem('mfhc_booking_program');
+      setSelectedProgramForBooking(null);
+    }
+    setAuthModalOpenState(open);
+  };
+
   const setBookingAvailabilityModal = (open: boolean) => {
-    if (open && appointmentRequestAvailability !== 'available') return;
-    setBookingModalOpen(open);
+    if (!open) {
+      setBookingModalOpen(false);
+      return;
+    }
+    if (!isSignedIn) {
+      sessionStorage.setItem('mfhc_booking_after_signin', 'true');
+      setAuthModalOpenState(true);
+      return;
+    }
+    if (appointmentRequestAvailability !== 'available') return;
+    setBookingModalOpen(true);
   };
 
   const markAppointmentRequestStatus = useCallback((status: 'pending' | 'confirmed') => {
@@ -103,6 +125,10 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   useEffect(() => {
+    if (!isSignedIn) {
+      setAppointmentRequestAvailability('available');
+      return;
+    }
     let active = true;
     let loading = false;
     const refreshAppointmentRequestAvailability = async () => {
@@ -124,9 +150,15 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
         if (active) {
           const statuses = result.appointments.map((appointment) => appointment.status.toLowerCase());
-          setAppointmentRequestAvailability(statuses.includes('pending')
+          const availability = statuses.includes('pending')
             ? 'pending'
-            : statuses.includes('confirmed') ? 'confirmed' : 'available');
+            : statuses.includes('confirmed') ? 'confirmed' : 'available';
+          setAppointmentRequestAvailability(availability);
+          if (sessionStorage.getItem('mfhc_booking_after_signin') === 'true') {
+            sessionStorage.removeItem('mfhc_booking_after_signin');
+            sessionStorage.removeItem('mfhc_booking_program');
+            if (availability === 'available') setBookingModalOpen(true);
+          }
         }
       } catch {
         if (active) setAppointmentRequestAvailability('error');
@@ -145,7 +177,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       window.clearInterval(timer);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
     };
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   useEffect(() => {
     let active = true;
@@ -184,6 +216,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   const refreshUnreadAdminMessages = useCallback(async () => {
+    if (!isSignedIn) return;
     const token = await getToken();
     if (!token) throw new Error("Clerk sign-in is required.");
     const response = await fetch('/api/admin?mode=unread_messages', {
@@ -196,7 +229,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
     setUnreadAdminMessageCount(result.unreadCount);
     setUnreadMessagesError('');
-  }, [getToken]);
+  }, [getToken, isSignedIn]);
 
   const markAppointmentMessagesRead = useCallback(async (appointmentId: string) => {
     const token = await getToken();
@@ -212,6 +245,11 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [getToken, refreshUnreadAdminMessages]);
 
   useEffect(() => {
+    if (!isSignedIn) {
+      setUnreadAdminMessageCount(0);
+      setUnreadMessagesError('');
+      return;
+    }
     let active = true;
     const refresh = async () => {
       try {
@@ -227,9 +265,10 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       active = false;
       window.clearInterval(timer);
     };
-  }, [refreshUnreadAdminMessages]);
+  }, [refreshUnreadAdminMessages, isSignedIn]);
 
   useEffect(() => {
+    if (!isSignedIn) return;
     const loadData = async () => {
       try {
         const token = await getToken();
@@ -295,7 +334,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
     };
     void loadData();
-  }, []);
+  }, [getToken, isSignedIn]);
 
 
   useEffect(() => {
@@ -516,6 +555,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const openBookingForProgram = (programId: string) => {
     if (appointmentRequestAvailability !== 'available') return;
     setSelectedProgramForBooking(programId);
+    if (!isSignedIn) sessionStorage.setItem('mfhc_booking_program', programId);
     setBookingAvailabilityModal(true);
   };
 
@@ -543,6 +583,9 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
         submitContact,
         bookingModalOpen,
         setBookingModalOpen: setBookingAvailabilityModal,
+        authModalOpen,
+        setAuthModalOpen,
+        isSignedIn: Boolean(isSignedIn),
         messagesOpen,
         setMessagesOpen,
         appointmentRequestAvailability,

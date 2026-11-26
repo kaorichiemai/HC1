@@ -1,9 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SignIn, SignUp } from '@clerk/react';
+import { X } from 'lucide-react';
 import centerPhoto from '../assets/images/MR FLORES.png';
 
-export const AuthScreen: React.FC = () => {
+export const AuthScreen: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [isRegistering, setIsRegistering] = useState(false);
+
+  useEffect(() => {
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [onClose]);
 
   const signUpAppearance = {
     variables: {
@@ -47,8 +56,12 @@ export const AuthScreen: React.FC = () => {
   };
 
   return (
-    <main className="min-h-dvh bg-white px-3 py-4 text-zinc-900 sm:flex sm:items-center sm:justify-center sm:px-4 sm:py-12">
-      <section className="mx-auto w-full min-w-0 max-w-md border border-zinc-200 bg-white shadow-[0_18px_50px_rgba(0,0,0,0.08)]">
+    <div className="fixed inset-0 z-[60] overflow-y-auto bg-slate-950/60 px-3 py-4 text-zinc-900 sm:px-4 sm:py-8">
+      <div className="flex min-h-full items-center justify-center">
+      <section role="dialog" aria-modal="true" aria-label={isRegistering ? 'Create an account' : 'Log in'} className="relative mx-auto w-full min-w-0 max-w-md border border-zinc-200 bg-white shadow-[0_18px_50px_rgba(0,0,0,0.2)]">
+        <button type="button" onClick={onClose} aria-label="Close sign-in dialog" className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-full text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900">
+          <X className="h-5 w-5" />
+        </button>
         <div className="border-b border-zinc-200 px-4 py-4 sm:px-8 sm:py-5">
           <div className="flex items-center gap-3">
             <img src={centerPhoto} alt="Mayor Moises R. Flores Health Center" className="h-12 w-12 rounded-full border border-zinc-200 object-cover" />
@@ -77,6 +90,7 @@ export const AuthScreen: React.FC = () => {
           </div>
         </div>
       </section>
-    </main>
+      </div>
+    </div>
   );
 };
