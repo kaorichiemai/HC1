@@ -3,7 +3,7 @@ import type { GeoJSONSource as MapLibreGeoJSONSource, Map as MapLibreMap, Marker
 import 'maplibre-gl/dist/maplibre-gl.css';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Bike, CarFront, ChevronDown, ChevronUp, ExternalLink, LocateFixed, MapPin, PersonStanding, RefreshCw } from 'lucide-react';
+import { Bike, CarFront, ChevronDown, ChevronUp, ExternalLink, LocateFixed, MapPin, Motorbike, PersonStanding, RefreshCw } from 'lucide-react';
 
 type TravelMode = 'walking' | 'bicycling' | 'driving' | 'motorcycle';
 type Renderer = 'maplibre' | 'leaflet';
@@ -66,7 +66,7 @@ const modes: Array<{ id: TravelMode; label: string; icon: React.ReactNode }> = [
   { id: 'walking', label: 'Walk', icon: <PersonStanding className="w-4 h-4" /> },
   { id: 'bicycling', label: 'Bike', icon: <Bike className="w-4 h-4" /> },
   { id: 'driving', label: 'Car', icon: <CarFront className="w-4 h-4" /> },
-  { id: 'motorcycle', label: 'Motorcycle', icon: <CarFront className="w-4 h-4" /> },
+  { id: 'motorcycle', label: 'Motorcycle', icon: <Motorbike className="w-4 h-4" /> },
 ];
 const emptyFeatures: RouteFeatureCollection = { type: 'FeatureCollection', features: [] };
 
@@ -664,8 +664,8 @@ export const RouteFinder: React.FC = () => {
   const locationStatusColor = origin?.source === 'manual' ? 'bg-teal-300' : origin && origin.accuracy > 250 ? 'bg-amber-300' : origin ? 'bg-emerald-300' : 'bg-slate-400';
 
   return (
-    <section className="route-enter relative z-10 mx-auto w-full max-w-[1600px] px-4 py-3 sm:px-6 lg:px-8">
-    <aside aria-label="Live directions map" className="mx-auto max-h-[calc(100dvh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-[1440px] overflow-y-auto rounded-sm border border-[#d7dfda] bg-[#fcfdfb] shadow-[0_10px_32px_rgba(23,58,55,0.18)]">
+    <section className="route-enter relative z-10 mx-auto w-full max-w-none px-4 py-3 sm:px-6 lg:px-8">
+    <aside aria-label="Live directions map" className="mx-auto max-h-[calc(100dvh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full overflow-y-auto rounded-sm border border-[#d7dfda] bg-[#fcfdfb] shadow-[0_10px_32px_rgba(23,58,55,0.18)]">
       <header className="flex items-center justify-between gap-3 px-4 py-3 bg-[#0f4d3c] text-white">
         <div className="min-w-0">
           <div className="text-sm font-bold">Navigate to health center</div>

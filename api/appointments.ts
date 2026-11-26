@@ -174,15 +174,26 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         capacity: Number(row.capacity),
         blocked: Number(row.blocked) === 1,
       }));
+      const unavailableResult = await db.execute({
+        sql: `SELECT DISTINCT preferred_date, preferred_time
+              FROM appointment_requests
+              WHERE status IN ('pending', 'confirmed') AND preferred_date >= ?
+              ORDER BY preferred_date ASC, preferred_time ASC`,
+        args: [new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(new Date())],
+      });
+      const unavailableSlots = unavailableResult.rows.map((row) => ({
+        date: String(row.preferred_date),
+        time: String(row.preferred_time),
+      }));
 
       if (decoded) {
         const appointments = await db.execute({
           sql: `SELECT * FROM appointment_requests WHERE owner_uid = ? ORDER BY preferred_date ASC, preferred_time ASC`,
           args: [decoded.sub],
         });
-        return response.status(200).json({ slots, prioritySlots, slotSettings, appointments: appointments.rows });
+        return response.status(200).json({ slots, prioritySlots, slotSettings, unavailableSlots, appointments: appointments.rows });
       }
-      return response.status(200).json({ slots, prioritySlots, slotSettings });
+      return response.status(200).json({ slots, prioritySlots, slotSettings, unavailableSlots });
     } catch {
       return response.status(500).json({ error: 'Schedule data could not be loaded.' });
     }
@@ -307,6 +318,17 @@ export default async function handler(request: ApiRequest, response: ApiResponse
             status: String(existing.status),
           },
         });
+      }
+      const occupiedSlot = await transaction.execute({
+        sql: `SELECT 1 FROM appointment_requests
+              WHERE preferred_date = ? AND preferred_time = ?
+                AND status IN ('pending', 'confirmed')
+              LIMIT 1`,
+        args: [preferredDate, preferredTime],
+      });
+      if (occupiedSlot.rows[0]) {
+        await transaction.commit();
+        return response.status(409).json({ error: 'This appointment time has already been booked. Please choose another time.' });
       }
       const slotSettings = await transaction.execute({
         sql: `SELECT time_slot, blocked FROM appointment_slot_settings

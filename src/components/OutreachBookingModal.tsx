@@ -22,6 +22,11 @@ interface PublicSlotSetting {
   blocked: boolean;
 }
 
+interface UnavailableAppointmentSlot {
+  date: string;
+  time: string;
+}
+
 interface PendingAppointmentRequest {
   referenceCode: string;
   preferredDate: string;
@@ -66,17 +71,22 @@ export const OutreachBookingModal: React.FC = () => {
   const [availabilityError, setAvailabilityError] = useState('');
   const [receipt, setReceipt] = useState<AppointmentReceipt | null>(null);
   const [slotSettings, setSlotSettings] = useState<PublicSlotSetting[]>([]);
+  const [unavailableSlots, setUnavailableSlots] = useState<UnavailableAppointmentSlot[]>([]);
   const [pendingRequest, setPendingRequest] = useState<PendingAppointmentRequest | null>(null);
   const [pendingRequestLoaded, setPendingRequestLoaded] = useState(false);
   const [formStep, setFormStep] = useState<1 | 2>(1);
   const appointmentFormRef = useRef<HTMLFormElement>(null);
   const earliestDate = getEarliestAppointmentDate(now);
+  const dateBlocked = slotSettings.some((setting) => setting.date === preferredDate && setting.time === 'all_day' && setting.blocked);
   const isTimeBlocked = (time: string) => {
     const period = getAppointmentTimePeriod(time);
     return slotSettings.some((setting) => setting.date === preferredDate
       && setting.blocked
       && (setting.time === time || setting.time === period));
   };
+  const isTimeTaken = (time: string) => unavailableSlots.some((slot) => (
+    slot.date === preferredDate && slot.time === time
+  ));
 
   useEffect(() => {
     if (!bookingModalOpen) return;
@@ -89,12 +99,18 @@ export const OutreachBookingModal: React.FC = () => {
   }, [earliestDate]);
 
   useEffect(() => {
-    if (isAppointmentTimeAvailable(preferredDate, preferredTime, now)) return;
+    if (!dateBlocked
+      && isAppointmentTimeAvailable(preferredDate, preferredTime, now)
+      && !isTimeBlocked(preferredTime)
+      && !isTimeTaken(preferredTime)) return;
     const nextAvailableTime = APPOINTMENT_TIME_SLOTS.find((time) => (
-      isAppointmentTimeAvailable(preferredDate, time, now)
+      !dateBlocked
+      && isAppointmentTimeAvailable(preferredDate, time, now)
+      && !isTimeBlocked(time)
+      && !isTimeTaken(time)
     ));
     if (nextAvailableTime) setPreferredTime(nextAvailableTime);
-  }, [preferredDate, preferredTime, now]);
+  }, [dateBlocked, preferredDate, preferredTime, now, slotSettings, unavailableSlots]);
 
   useEffect(() => {
     if (selectedProgramForBooking && services.some((service) => service.id === selectedProgramForBooking)) {
@@ -140,14 +156,16 @@ export const OutreachBookingModal: React.FC = () => {
         });
         const result = await response.json() as {
           slotSettings?: PublicSlotSetting[];
+          unavailableSlots?: UnavailableAppointmentSlot[];
           appointments?: Array<{ reference_code: string; preferred_date: string; preferred_time: string; status: string }>;
           error?: string;
         };
-        if (!response.ok || !Array.isArray(result.slotSettings)) {
+        if (!response.ok || !Array.isArray(result.slotSettings) || !Array.isArray(result.unavailableSlots)) {
           throw new Error(result.error || 'Appointment availability could not be loaded.');
         }
         if (active) {
           setSlotSettings(result.slotSettings);
+          setUnavailableSlots(result.unavailableSlots);
           const activeAppointment = result.appointments?.find((appointment) => ['pending', 'confirmed'].includes(appointment.status.toLowerCase()));
           setPendingRequest(activeAppointment ? {
             referenceCode: activeAppointment.reference_code,
@@ -178,10 +196,11 @@ export const OutreachBookingModal: React.FC = () => {
   const isFilipino = language === 'fil';
   const canSubmitAppointment = appointmentRequestAvailability === 'available';
   const selectedService = services.find((service) => service.id === serviceId);
-  const dateBlocked = slotSettings.some((setting) => setting.date === preferredDate && setting.time === 'all_day' && setting.blocked);
   const timeBlocked = isTimeBlocked(preferredTime);
+  const timeTaken = isTimeTaken(preferredTime);
   const slotUnavailable = dateBlocked
     || timeBlocked
+    || timeTaken
     || !isAppointmentTimeAvailable(preferredDate, preferredTime, now);
 
   const handleClose = () => setBookingModalOpen(false);
@@ -442,8 +461,9 @@ export const OutreachBookingModal: React.FC = () => {
                   {APPOINTMENT_TIME_SLOTS.map((time) => {
                     const unavailable = !isAppointmentTimeAvailable(preferredDate, time, now)
                       || isTimeBlocked(time)
+                      || isTimeTaken(time)
                       || dateBlocked;
-                    return <option key={time} value={time} disabled={unavailable}>{formatAppointmentTime(time)}{unavailable && isTimeBlocked(time) ? ' · Unavailable' : ''}</option>;
+                    return <option key={time} value={time} disabled={unavailable}>{formatAppointmentTime(time)}{isTimeTaken(time) || dateBlocked || isTimeBlocked(time) ? ' · Unavailable' : ''}</option>;
                   })}
                 </select>
               </div>
@@ -455,7 +475,7 @@ export const OutreachBookingModal: React.FC = () => {
               </div>
             </div>}
 
-            {slotUnavailable && <p role="status" className="text-sm font-semibold text-rose-800">{isFilipino ? 'Sarado ang napiling petsa o time slot. Pumili ng ibang schedule.' : 'This date or time slot is blocked by clinic staff. Choose a different schedule.'}</p>}
+            {slotUnavailable && <p role="status" className="text-sm font-semibold text-rose-800">{isFilipino ? 'Hindi available ang napiling petsa o oras. Pumili ng ibang schedule.' : 'This date or time is unavailable or already booked. Choose another schedule.'}</p>}
             {availabilityError && <p role="status" className="text-xs text-amber-800">{isFilipino ? 'Hindi ma-check ang availability. Susuriin muli ang napiling schedule kapag ipinadala.' : 'Availability could not be checked. The server will verify your selected schedule when you submit.'}</p>}
 
             {error && <p role="alert" className="flex items-start gap-2 text-sm text-rose-800"><AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />{error}</p>}
@@ -465,7 +485,7 @@ export const OutreachBookingModal: React.FC = () => {
                 <button type="button" onClick={() => { setError(''); setFormStep(1); }} className="min-h-11 flex-1 rounded-md border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:flex-none">{isFilipino ? 'Bumalik' : 'Back'}</button>
                 <button type="button" onClick={handleClose} className="min-h-11 flex-1 rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:flex-none">{isFilipino ? 'Kanselahin' : 'Cancel'}</button>
               </div>
-              <button type="submit" disabled={submitting || !canSubmitAppointment || !selectedService || !privacyConsent || !attendanceConsent} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#0f4d3c] px-5 py-2.5 text-base font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"><CalendarDays className="h-4 w-4" />{submitting ? (isFilipino ? 'Ipinapadala...' : 'Sending...') : (isFilipino ? 'Ipadala ang request' : 'Send request')}</button>
+              <button type="submit" disabled={submitting || slotUnavailable || !canSubmitAppointment || !selectedService || !privacyConsent || !attendanceConsent} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-sm bg-[#0f4d3c] px-5 py-2.5 text-base font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"><CalendarDays className="h-4 w-4" />{submitting ? (isFilipino ? 'Ipinapadala...' : 'Sending...') : (isFilipino ? 'Ipadala ang request' : 'Send request')}</button>
             </div>}
           </form>
         )}
