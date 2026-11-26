@@ -110,7 +110,7 @@ export const PublicInformation: React.FC = () => {
             )}
           </section>
 
-          <div className="mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+          <div className="accessibility-dark-details mt-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
           <section className="min-w-0">
             <h3 className="mb-3 flex items-center gap-2 text-xl font-bold text-white lg:text-lg"><Clock3 className="h-5 w-5 text-emerald-200" />{isFilipino ? 'Oras ng klinika' : 'Clinic hours'}</h3>
             <ul className="bullet-list my-0 text-base leading-7 text-emerald-50 lg:text-sm lg:leading-6">
