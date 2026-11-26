@@ -34,15 +34,17 @@ const illustrationForService = (category: string) => {
 };
 
 export const ServicesSection: React.FC = () => {
-  const { language, openBookingForProgram, clinicOpen, appointmentRequestAvailability, siteContent } = useHealthCenter();
-  const bookingEnabled = clinicOpen === true && appointmentRequestAvailability === 'available';
+  const { language, openBookingForProgram, appointmentRequestAvailability, siteContent } = useHealthCenter();
+  const bookingEnabled = appointmentRequestAvailability === 'available';
   const bookingLabel = appointmentRequestAvailability === 'pending'
     ? 'Appointment under review'
+    : appointmentRequestAvailability === 'confirmed'
+      ? 'Accepted appointment active'
     : appointmentRequestAvailability === 'checking'
       ? 'Checking request status'
       : appointmentRequestAvailability === 'error'
         ? 'Unable to check request'
-        : clinicOpen === true ? 'REQUEST AN APPOINTMENT' : clinicOpen === false ? 'CLOSED' : 'Checking availability';
+        : 'REQUEST AN APPOINTMENT';
 
   const [selectedService, setSelectedService] = useState<ServiceDetail | null>(null);
   const servicePreview = (description: string) => {

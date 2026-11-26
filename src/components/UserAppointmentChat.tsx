@@ -2,6 +2,7 @@ import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, MessageCircle, Send, X } from 'lucide-react';
 import { useAuth, useUser } from '@clerk/react';
 import { useHealthCenter } from '../context/HealthCenterContext';
+import { formatAppointmentTime } from '../appointmentSchedule';
 
 interface UserAppointment {
   id: string;
@@ -136,7 +137,7 @@ export const UserAppointmentChat: React.FC = () => {
             {appointments.map((appointment) => (
               <button key={appointment.id} type="button" onClick={() => setSelectedId(appointment.id)} className={`w-full border-b border-[#edf1ee] px-4 py-4 text-left hover:bg-[#f4f7f4] ${selectedId === appointment.id ? 'bg-[#edf3ef]' : ''}`}>
                 <div className="flex items-start justify-between gap-3"><div><div className="text-sm font-bold text-[#17312e]">{appointment.service_name}</div><div className="mt-1 text-xs text-[#66736f]">{appointment.reference_code}</div></div><span className={`px-2 py-1 text-[10px] font-bold ${appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : appointment.status === 'completed' ? 'bg-sky-100 text-sky-800' : appointment.status === 'cancelled' || appointment.status === 'rejected' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{appointment.status}</span></div>
-                <div className="mt-2 text-xs text-[#66736f]">{appointment.preferred_date} · {appointment.preferred_time}</div>
+                <div className="mt-2 text-xs text-[#66736f]">{appointment.preferred_date} · {formatAppointmentTime(appointment.preferred_time)}</div>
               </button>
             ))}
             {appointments.length === 0 && <p className="p-4 text-sm text-[#66736f]">No conversations yet</p>}

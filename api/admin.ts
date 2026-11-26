@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { verifyToken } from '@clerk/backend';
 import { clinicPublicSettingKeys, ensureSiteContent, getContentDatabase, readSiteContent, validateSiteContent } from './site-content-store.js';
+import { formatAppointmentTime, getAppointmentTimePeriod } from '../src/appointmentSchedule.js';
 
 type ApiRequest = IncomingMessage & { body?: unknown; headers: IncomingMessage['headers'] & { authorization?: string } };
 type ApiResponse = ServerResponse & {
@@ -12,7 +13,6 @@ type ApiResponse = ServerResponse & {
 };
 
 let database: ReturnType<typeof createClient> | undefined;
-let clinicSettingsReady: Promise<void> | null = null;
 
 function getDatabase() {
   const url = process.env.TURSO_DATABASE_URL;
@@ -20,25 +20,6 @@ function getDatabase() {
   if (!url || !authToken) return null;
   database ??= createClient({ url, authToken });
   return database;
-}
-
-async function ensureClinicSettings(db: ReturnType<typeof createClient>) {
-  clinicSettingsReady ??= (async () => {
-    await db.execute(`CREATE TABLE IF NOT EXISTS clinic_settings (
-      setting_key TEXT PRIMARY KEY,
-      setting_value TEXT NOT NULL,
-      updated_at TEXT NOT NULL
-    )`);
-    await db.execute({
-      sql: `INSERT OR IGNORE INTO clinic_settings (setting_key, setting_value, updated_at)
-            VALUES ('clinic_open', '0', ?)`,
-      args: [new Date().toISOString()],
-    });
-  })().catch((error: unknown) => {
-    clinicSettingsReady = null;
-    throw error;
-  });
-  await clinicSettingsReady;
 }
 
 function text(value: unknown, limit: number) {
@@ -67,7 +48,8 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
       privacy_consent INTEGER NOT NULL,
       status TEXT NOT NULL DEFAULT 'pending',
       chat_status TEXT NOT NULL DEFAULT 'closed',
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      completed_at TEXT
     )`,
     `CREATE TABLE IF NOT EXISTS appointment_messages (
       id TEXT PRIMARY KEY,
@@ -98,11 +80,6 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
       PRIMARY KEY (appointment_id, user_uid)
     )`,
   ], 'write');
-  await db.execute({
-    sql: `INSERT OR IGNORE INTO clinic_settings (setting_key, setting_value, updated_at)
-          VALUES ('clinic_open', '0', ?)`,
-    args: [new Date().toISOString()],
-  });
   const columns = await db.execute('PRAGMA table_info(appointment_requests)');
   const columnNames = new Set(columns.rows.map((column) => String(column.name)));
   if (!columnNames.has('owner_uid')) {
@@ -110,6 +87,9 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
   }
   if (!columnNames.has('chat_status')) {
     await db.execute("ALTER TABLE appointment_requests ADD COLUMN chat_status TEXT NOT NULL DEFAULT 'closed'");
+  }
+  if (!columnNames.has('completed_at')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN completed_at TEXT');
   }
 }
 
@@ -155,20 +135,6 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   if (!db) return response.status(503).json({ error: 'Turso database is not configured.' });
 
   const mode = new URL(request.url ?? '/', 'http://localhost').searchParams.get('mode');
-  if (request.method === 'GET' && mode === 'clinic_status') {
-    try {
-      await ensureClinicSettings(db);
-      const result = await db.execute("SELECT setting_value, updated_at FROM clinic_settings WHERE setting_key = 'clinic_open'");
-      const setting = result.rows[0];
-      return response.status(200).json({
-        clinicOpen: setting?.setting_value === '1',
-        updatedAt: setting?.updated_at ?? null,
-      });
-    } catch {
-      return response.status(500).json({ error: 'Clinic status could not be loaded.' });
-    }
-  }
-
   await initializeAdminDatabase(db);
   const admin = isAdmin(decoded);
 
@@ -281,19 +247,6 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         return response.status(409).json({ error: 'Only pending or accepted appointments can be cancelled.' });
       }
       return response.status(200).json({ appointmentId, status: 'cancelled' });
-    }
-
-    if (action === 'set_clinic_status') {
-      if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
-      if (typeof body.isOpen !== 'boolean') return response.status(400).json({ error: 'A valid clinic status is required.' });
-      const updatedAt = new Date().toISOString();
-      await db.execute({
-        sql: `INSERT INTO clinic_settings (setting_key, setting_value, updated_at)
-              VALUES ('clinic_open', ?, ?)
-              ON CONFLICT(setting_key) DO UPDATE SET setting_value = excluded.setting_value, updated_at = excluded.updated_at`,
-        args: [body.isOpen ? '1' : '0', updatedAt],
-      });
-      return response.status(200).json({ clinicOpen: body.isOpen, updatedAt });
     }
 
     if (action === 'upload_announcement_image') {
@@ -451,25 +404,15 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       }
       if (typeof body.dateBlocked !== 'boolean'
         || typeof body.morningBlocked !== 'boolean'
-        || typeof body.afternoonBlocked !== 'boolean'
-        || typeof body.noPreferenceBlocked !== 'boolean'
-        || !Number.isInteger(body.morningCapacity)
-        || !Number.isInteger(body.afternoonCapacity)
-        || !Number.isInteger(body.noPreferenceCapacity)
-        || Number(body.morningCapacity) < 0
-        || Number(body.afternoonCapacity) < 0
-        || Number(body.noPreferenceCapacity) < 0
-        || Number(body.morningCapacity) > 1000
-        || Number(body.afternoonCapacity) > 1000
-        || Number(body.noPreferenceCapacity) > 1000) {
-        return response.status(400).json({ error: 'Enter valid blocking options and capacities from 0 to 1,000.' });
+        || typeof body.afternoonBlocked !== 'boolean') {
+        return response.status(400).json({ error: 'Choose valid date and time blocking options.' });
       }
       const updatedAt = new Date().toISOString();
       const settings = [
         { timeSlot: 'all_day', capacity: 0, blocked: body.dateBlocked },
-        { timeSlot: 'morning', capacity: Number(body.morningCapacity), blocked: body.morningBlocked },
-        { timeSlot: 'afternoon', capacity: Number(body.afternoonCapacity), blocked: body.afternoonBlocked },
-        { timeSlot: 'no preference', capacity: Number(body.noPreferenceCapacity), blocked: body.noPreferenceBlocked },
+        { timeSlot: 'morning', capacity: 0, blocked: body.morningBlocked },
+        { timeSlot: 'afternoon', capacity: 0, blocked: body.afternoonBlocked },
+        { timeSlot: 'no preference', capacity: 0, blocked: false },
       ];
       await db.batch(settings.map(({ timeSlot, capacity, blocked }) => ({
         sql: `INSERT INTO appointment_slot_settings (appointment_date, time_slot, capacity, blocked, updated_at)
@@ -489,22 +432,6 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       });
     }
 
-    if (action === 'delete_appointment') {
-      if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
-      if (!appointmentId) return response.status(400).json({ error: 'Appointment is required.' });
-      const appointment = await db.execute({
-        sql: 'SELECT id FROM appointment_requests WHERE id = ?',
-        args: [appointmentId],
-      });
-      if (appointment.rows.length === 0) return response.status(404).json({ error: 'Appointment not found.' });
-      await db.batch([
-        { sql: 'DELETE FROM appointment_messages WHERE appointment_id = ?', args: [appointmentId] },
-        { sql: 'DELETE FROM appointment_chat_reads WHERE appointment_id = ?', args: [appointmentId] },
-        { sql: 'DELETE FROM appointment_requests WHERE id = ?', args: [appointmentId] },
-      ], 'write');
-      return response.status(200).json({ appointmentId, deleted: true });
-    }
-
     if (action === 'delete_chat') {
       if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
       if (!appointmentId) return response.status(400).json({ error: 'Appointment is required.' });
@@ -520,13 +447,12 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       return response.status(200).json({ appointmentId, archived: true });
     }
 
-    if (action === 'approve' || action === 'reject' || action === 'cancel' || action === 'complete') {
+    if (action === 'approve' || action === 'cancel' || action === 'complete') {
       if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
       if (!appointmentId && !referenceCode) return response.status(400).json({ error: 'Appointment is required.' });
       const status = action === 'approve' ? 'confirmed'
-        : action === 'reject' ? 'rejected'
-          : action === 'complete' ? 'completed'
-            : 'cancelled';
+        : action === 'complete' ? 'completed'
+          : 'cancelled';
       const result = action === 'approve'
         ? await db.execute({
           sql: `UPDATE appointment_requests SET status = 'confirmed'
@@ -534,32 +460,24 @@ export default async function handler(request: ApiRequest, response: ApiResponse
                 AND NOT EXISTS (
                   SELECT 1 FROM appointment_slot_settings
                   WHERE appointment_date = appointment_requests.preferred_date
-                    AND time_slot IN ('all_day', appointment_requests.preferred_time)
+                    AND time_slot IN (
+                      'all_day',
+                      appointment_requests.preferred_time,
+                      CASE
+                        WHEN appointment_requests.preferred_time = 'morning' THEN 'morning'
+                        WHEN appointment_requests.preferred_time IN ('afternoon', 'no preference') THEN 'afternoon'
+                        WHEN CAST(substr(appointment_requests.preferred_time, 1, 2) AS INTEGER) < 12 THEN 'morning'
+                        ELSE 'afternoon'
+                      END
+                    )
                     AND blocked = 1
-                )
-                AND (
-                  COALESCE((
-                    SELECT capacity FROM appointment_slot_settings
-                    WHERE appointment_date = appointment_requests.preferred_date
-                      AND time_slot = appointment_requests.preferred_time
-                  ), 0) = 0
-                  OR (
-                    SELECT COUNT(*) FROM appointment_requests AS accepted
-                    WHERE accepted.status = 'confirmed'
-                      AND accepted.preferred_date = appointment_requests.preferred_date
-                      AND accepted.preferred_time = appointment_requests.preferred_time
-                  ) < (
-                    SELECT capacity FROM appointment_slot_settings
-                    WHERE appointment_date = appointment_requests.preferred_date
-                      AND time_slot = appointment_requests.preferred_time
-                  )
                 )`,
           args: [appointmentId || referenceCode],
         })
         : action === 'complete'
           ? appointmentId
-            ? await db.execute({ sql: "UPDATE appointment_requests SET status = 'completed' WHERE id = ? AND status = 'confirmed'", args: [appointmentId] })
-            : await db.execute({ sql: "UPDATE appointment_requests SET status = 'completed' WHERE reference_code = ? AND status = 'confirmed'", args: [referenceCode] })
+            ? await db.execute({ sql: "UPDATE appointment_requests SET status = 'completed', completed_at = ? WHERE id = ? AND status = 'confirmed'", args: [new Date().toISOString(), appointmentId] })
+            : await db.execute({ sql: "UPDATE appointment_requests SET status = 'completed', completed_at = ? WHERE reference_code = ? AND status = 'confirmed'", args: [new Date().toISOString(), referenceCode] })
         : appointmentId
           ? await db.execute({ sql: 'UPDATE appointment_requests SET status = ? WHERE id = ?', args: [status, appointmentId] })
           : await db.execute({ sql: 'UPDATE appointment_requests SET status = ? WHERE reference_code = ?', args: [status, referenceCode] });
@@ -576,13 +494,11 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         const allSettings = setting.rows;
         const fullDayBlocked = allSettings.some((item) => item.time_slot === 'all_day' && Number(item.blocked) === 1);
         const slotSetting = allSettings.find((item) => item.time_slot === row.preferred_time);
-        if (fullDayBlocked || Number(slotSetting?.blocked) === 1) {
+        const periodSetting = allSettings.find((item) => item.time_slot === getAppointmentTimePeriod(String(row.preferred_time)));
+        if (fullDayBlocked || Number(slotSetting?.blocked) === 1 || Number(periodSetting?.blocked) === 1) {
           return response.status(409).json({ error: 'This appointment date or time slot is blocked. Unblock it before accepting the request.' });
         }
         if (String(row.status) !== 'pending') return response.status(409).json({ error: 'Only pending appointment requests can be accepted.' });
-        if (Number(slotSetting?.capacity) > 0) {
-          return response.status(409).json({ error: 'This time slot has reached its appointment limit. Increase the capacity or choose another request.' });
-        }
         return response.status(409).json({ error: 'This appointment could not be accepted. Refresh and try again.' });
       }
       if (result.rowsAffected === 0 && action === 'complete') {
@@ -601,7 +517,8 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         const appointment = approved.rows[0];
         if (appointment) {
           const now = new Date().toISOString();
-          const message = `Your appointment request for ${String(appointment.service_name)} on ${String(appointment.preferred_date)} (${String(appointment.preferred_time)}) has been accepted.\n\nYou may cancel it from Messages. To request a schedule change, reply in this conversation and clinic staff will assist you.\n\nKumpirmado na ang iyong appointment. Maaari mo itong kanselahin sa Messages. Para humiling ng pagbabago sa iskedyul, mag-reply sa pag-uusap na ito.`;
+          const appointmentTime = formatAppointmentTime(String(appointment.preferred_time));
+          const message = `Your appointment request for ${String(appointment.service_name)} on ${String(appointment.preferred_date)} at ${appointmentTime} has been accepted.\n\nYou may cancel it from Messages. To request a schedule change, reply in this conversation and clinic staff will assist you.\n\nKumpirmado na ang iyong appointment para sa ${String(appointment.service_name)} sa ${String(appointment.preferred_date)}, ${appointmentTime}. Maaari mo itong kanselahin sa Messages. Para humiling ng pagbabago sa iskedyul, mag-reply sa pag-uusap na ito.`;
           await db.batch([
             { sql: "UPDATE appointment_requests SET chat_status = 'open' WHERE id = ? OR reference_code = ?", args: [appointmentId, referenceCode] },
             {

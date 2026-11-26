@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CalendarDays, Clock3, MapPin } from 'lucide-react';
 import { useHealthCenter } from '../context/HealthCenterContext';
+import { formatAppointmentTime, getAppointmentTimeMinutes } from '../appointmentSchedule';
 
 interface ScheduleSlot {
   date: string;
@@ -49,12 +50,6 @@ export const AppointmentSchedule: React.FC = () => {
     };
   }, [isFilipino]);
 
-  const timeLabels: Record<string, string> = {
-    morning: isFilipino ? 'Umaga' : 'Morning',
-    afternoon: isFilipino ? 'Hapon' : 'Afternoon',
-    'no preference': isFilipino ? 'Anumang oras' : 'Any time',
-  };
-  const timeOrder: Record<string, number> = { morning: 0, afternoon: 1, 'no preference': 2 };
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
   const appointmentsByDate = slots.reduce<Record<string, ScheduleSlot[]>>((grouped, slot) => {
     (grouped[slot.date] ??= []).push(slot);
@@ -88,7 +83,7 @@ export const AppointmentSchedule: React.FC = () => {
                 <CalendarDays className="h-8 w-8 text-[#2c7a5f]" aria-hidden="true" />
                 <h3 className="mt-4 text-xl font-bold text-[#0f4d3c]">{isFilipino ? 'Iskedyul ng appointment' : 'Appointment schedule'}</h3>
                 <p className="mt-2 max-w-xl text-sm leading-relaxed text-[#6b7280]">
-                  {isFilipino ? 'Lalabas dito ang mga oras ng appointment kapag naaprubahan na ng clinic staff.' : 'Approved appointment times will appear here after clinic staff accept them.'}
+                  {isFilipino ? 'Lalabas dito ang mga oras ng appointment kapag nakumpirma na ang mga ito.' : 'Confirmed appointment times will appear here after automatic or staff approval.'}
                 </p>
               </div>
               <aside className="site-card p-5 sm:p-6">
@@ -103,14 +98,20 @@ export const AppointmentSchedule: React.FC = () => {
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {dates.flatMap((date) => appointmentsByDate[date]
                 .slice()
-                .sort((first, second) => (timeOrder[first.time] ?? 99) - (timeOrder[second.time] ?? 99))
+                .sort((first, second) => {
+                  const firstMinutes = getAppointmentTimeMinutes(first.time)
+                    ?? (first.time === 'morning' ? 0 : first.time === 'afternoon' ? 720 : 1440);
+                  const secondMinutes = getAppointmentTimeMinutes(second.time)
+                    ?? (second.time === 'morning' ? 0 : second.time === 'afternoon' ? 720 : 1440);
+                  return firstMinutes - secondMinutes;
+                })
                 .map((slot) => (
                   <article key={`${date}-${slot.time}`} className="site-card p-5 transition-colors hover:border-[#9bbdad]">
                     <p className="text-[11px] font-bold uppercase tracking-wide text-[#2c7a5f]">{date}</p>
                     <h3 className="mt-1 text-sm font-bold text-[#0f4d3c]">{dateLabel(date)}</h3>
                     <div className="mt-5 flex items-center gap-2 border-t border-[#e7eee9] pt-4">
                       <Clock3 className="h-5 w-5 shrink-0 text-[#2c7a5f]" />
-                      <span className="text-base font-bold text-[#0f4d3c]">{timeLabels[slot.time] ?? slot.time}</span>
+                      <span className="text-base font-bold text-[#0f4d3c]">{formatAppointmentTime(slot.time)}</span>
                     </div>
                     <p className="mt-3 text-sm text-[#6b7280]">
                       <strong className="text-[#374151]">{slot.bookedCount}</strong> {isFilipino ? 'appointment na naaprubahan' : `accepted ${slot.bookedCount === 1 ? 'appointment' : 'appointments'}`}

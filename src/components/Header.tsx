@@ -13,13 +13,12 @@ export const Header: React.FC = () => {
     activeSection,
     setActiveSection,
     setBookingModalOpen,
-    clinicOpen,
     appointmentRequestAvailability,
     setMessagesOpen,
     unreadAdminMessageCount,
     unreadMessagesError,
   } = useHealthCenter();
-  const bookingEnabled = clinicOpen === true && appointmentRequestAvailability === 'available';
+  const bookingEnabled = appointmentRequestAvailability === 'available';
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navLinks = [

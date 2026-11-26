@@ -1,21 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { CalendarDays, ArrowDown, Clock3, MapPin } from 'lucide-react';
 import centerPhoto from '../assets/images/MR FLORES.png';
-import { isClinicOpenBySchedule } from '../clinicHours';
 
 export const Hero: React.FC = () => {
-  const { language, setActiveSection, setBookingModalOpen, clinicOpen, appointmentRequestAvailability, siteContent } = useHealthCenter();
+  const { language, setActiveSection, setBookingModalOpen, appointmentRequestAvailability, siteContent } = useHealthCenter();
   const clinicAddress = language === 'fil' ? siteContent.settings.clinicAddressFil : siteContent.settings.clinicAddress;
   const clinicHours = language === 'fil' ? siteContent.settings.clinicHoursFil : siteContent.settings.clinicHours;
-  const [currentTime, setCurrentTime] = useState(() => Date.now());
-  const openBySchedule = clinicOpen ?? isClinicOpenBySchedule(new Date(currentTime));
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setCurrentTime(Date.now()), 60_000);
-    return () => window.clearInterval(timer);
-  }, []);
-  const bookingEnabled = clinicOpen === true && appointmentRequestAvailability === 'available';
+  const bookingEnabled = appointmentRequestAvailability === 'available';
   const handleScrollTo = (id: string) => {
     setActiveSection(id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -45,11 +37,9 @@ export const Hero: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className={`flex min-h-20 min-w-0 max-w-full items-center justify-center gap-3 self-end rounded-md border px-5 py-4 text-xl font-extrabold leading-tight shadow-lg sm:min-h-28 sm:min-w-64 sm:self-center sm:gap-4 sm:px-9 sm:py-5 sm:text-3xl ${openBySchedule ? 'border-emerald-200/50 bg-emerald-950/50 text-white' : 'border-rose-200/60 bg-rose-950/55 text-white'}`} role="status" aria-live="polite">
-            <span className={`h-3.5 w-3.5 shrink-0 rounded-full ring-4 sm:h-4 sm:w-4 ${openBySchedule ? 'bg-emerald-400 ring-emerald-300/20' : 'bg-rose-400 ring-rose-300/20'}`} />
-            {openBySchedule
-              ? (language === 'fil' ? 'BUKAS NGAYON' : 'OPEN NOW')
-              : (language === 'fil' ? 'SARADO NGAYON' : 'CLOSED NOW')}
+          <div className="flex min-h-20 min-w-0 max-w-full items-center justify-center gap-3 self-end rounded-md border border-emerald-200/50 bg-emerald-950/50 px-5 py-4 text-center text-base font-extrabold leading-tight text-white shadow-lg sm:min-h-28 sm:min-w-64 sm:self-center sm:gap-4 sm:px-9 sm:py-5 sm:text-xl" role="status">
+            <CalendarDays className="h-5 w-5 shrink-0 text-emerald-300 sm:h-6 sm:w-6" />
+            {language === 'fil' ? 'TUMATANGGAP NG REQUEST · 24/7' : 'ONLINE REQUESTS · 24/7'}
           </div>
           </div>
         </div>

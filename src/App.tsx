@@ -36,13 +36,19 @@ const AppContent: React.FC<{ user: ReturnType<typeof useUser>['user'] }> = ({ us
   return (
     <div className="public-page-shell min-h-screen flex flex-col text-[#374151] antialiased selection:bg-[#eaf3ee] selection:text-[#0f4d3c]">
       <Header />
-      {appointmentRequestAvailability === 'pending' && (
-        <div role="status" aria-live="polite" className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-amber-950">
+      {(appointmentRequestAvailability === 'pending' || appointmentRequestAvailability === 'confirmed') && (
+        <div role="status" aria-live="polite" className={`border-b px-4 py-3 ${appointmentRequestAvailability === 'pending' ? 'border-amber-200 bg-amber-50 text-amber-950' : 'border-emerald-200 bg-emerald-50 text-emerald-950'}`}>
           <div className="mx-auto flex max-w-7xl items-start gap-2.5 text-sm">
-            <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
-            <p>{language === 'fil'
-              ? 'Sinusuri pa ng kawani ang iyong appointment request. Mag-a-update ang abisong ito kapag may aksyon na.'
-              : 'Your appointment request is under review. This notice will update when clinic staff respond.'}</p>
+            {appointmentRequestAvailability === 'pending'
+              ? <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+              : <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />}
+            <p>{appointmentRequestAvailability === 'pending'
+              ? (language === 'fil'
+                ? 'Sinusuri pa ng kawani ang iyong appointment request. Mag-a-update ang abisong ito kapag may aksyon na.'
+                : 'Your appointment request is under review. This notice will update when clinic staff respond.')
+              : (language === 'fil'
+                ? 'May kumpirmado kang appointment. Kumpletuhin o kanselahin muna ito bago humiling muli.'
+                : 'You have an accepted appointment. Complete or cancel it before requesting another.')}</p>
           </div>
         </div>
       )}

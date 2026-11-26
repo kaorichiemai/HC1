@@ -36,10 +36,8 @@ interface HealthCenterContextType {
   setBookingModalOpen: (open: boolean) => void;
   messagesOpen: boolean;
   setMessagesOpen: (open: boolean) => void;
-  clinicOpen: boolean | null;
-  clinicStatusError: string;
-  appointmentRequestAvailability: 'checking' | 'available' | 'pending' | 'error';
-  markAppointmentRequestPending: () => void;
+  appointmentRequestAvailability: 'checking' | 'available' | 'pending' | 'confirmed' | 'error';
+  markAppointmentRequestStatus: (status: 'pending' | 'confirmed') => void;
   siteContent: PublicSiteContent;
   siteContentError: string;
   unreadAdminMessageCount: number;
@@ -77,9 +75,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
   const [messagesOpen, setMessagesOpen] = useState(false);
-  const [clinicOpen, setClinicOpen] = useState<boolean | null>(null);
-  const [clinicStatusError, setClinicStatusError] = useState('');
-  const [appointmentRequestAvailability, setAppointmentRequestAvailability] = useState<'checking' | 'available' | 'pending' | 'error'>('checking');
+  const [appointmentRequestAvailability, setAppointmentRequestAvailability] = useState<'checking' | 'available' | 'pending' | 'confirmed' | 'error'>('checking');
   const [siteContent, setSiteContent] = useState<PublicSiteContent>(() => ({
     services: SERVICES_DATA,
     news: NEWS_UPDATES,
@@ -97,17 +93,13 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [language]);
 
   const setBookingAvailabilityModal = (open: boolean) => {
-    if (open && (clinicOpen !== true || appointmentRequestAvailability !== 'available')) return;
+    if (open && appointmentRequestAvailability !== 'available') return;
     setBookingModalOpen(open);
   };
 
-  useEffect(() => {
-    if (clinicOpen !== true || appointmentRequestAvailability === 'pending') setBookingModalOpen(false);
-  }, [clinicOpen, appointmentRequestAvailability]);
-
-  const markAppointmentRequestPending = useCallback(() => {
-    setAppointmentRequestAvailability('pending');
-  }, [getToken]);
+  const markAppointmentRequestStatus = useCallback((status: 'pending' | 'confirmed') => {
+    setAppointmentRequestAvailability(status);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -130,11 +122,10 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
           throw new Error(result.error || 'Appointment request status could not be checked.');
         }
         if (active) {
-          setAppointmentRequestAvailability(
-            result.appointments.some((appointment) => appointment.status.toLowerCase() === 'pending')
-              ? 'pending'
-              : 'available',
-          );
+          const statuses = result.appointments.map((appointment) => appointment.status.toLowerCase());
+          setAppointmentRequestAvailability(statuses.includes('pending')
+            ? 'pending'
+            : statuses.includes('confirmed') ? 'confirmed' : 'available');
         }
       } catch {
         if (active) setAppointmentRequestAvailability('error');
@@ -147,46 +138,6 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
     void refreshAppointmentRequestAvailability();
     const timer = window.setInterval(() => void refreshAppointmentRequestAvailability(), 3000);
-    document.addEventListener('visibilitychange', refreshWhenVisible);
-    return () => {
-      active = false;
-      window.clearInterval(timer);
-      document.removeEventListener('visibilitychange', refreshWhenVisible);
-    };
-  }, [getToken]);
-
-  useEffect(() => {
-    let active = true;
-    let loading = false;
-    const loadClinicStatus = async () => {
-      if (loading || document.visibilityState === 'hidden') return;
-      loading = true;
-      try {
-        const token = await getToken();
-        if (!token) throw new Error("Clerk sign-in is required.");
-        const response = await fetch('/api/admin?mode=clinic_status', {
-          headers: { Authorization: `Bearer ${token}` },
-          cache: 'no-store',
-        });
-        const result = await response.json() as { clinicOpen?: boolean; error?: string };
-        if (!response.ok || typeof result.clinicOpen !== 'boolean') {
-          throw new Error(result.error || 'Clinic status could not be loaded.');
-        }
-        if (!active) return;
-        setClinicOpen(result.clinicOpen);
-        setClinicStatusError('');
-      } catch (caught) {
-        if (!active) return;
-        setClinicStatusError(caught instanceof Error ? caught.message : 'Clinic status could not be loaded.');
-      } finally {
-        loading = false;
-      }
-    };
-    const refreshWhenVisible = () => {
-      if (document.visibilityState === 'visible') void loadClinicStatus();
-    };
-    void loadClinicStatus();
-    const timer = window.setInterval(() => void loadClinicStatus(), 3000);
     document.addEventListener('visibilitychange', refreshWhenVisible);
     return () => {
       active = false;
@@ -562,7 +513,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const openBookingForProgram = (programId: string) => {
-    if (clinicOpen !== true) return;
+    if (appointmentRequestAvailability !== 'available') return;
     setSelectedProgramForBooking(programId);
     setBookingAvailabilityModal(true);
   };
@@ -593,10 +544,8 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setBookingModalOpen: setBookingAvailabilityModal,
         messagesOpen,
         setMessagesOpen,
-        clinicOpen,
-        clinicStatusError,
         appointmentRequestAvailability,
-        markAppointmentRequestPending,
+        markAppointmentRequestStatus,
         siteContent,
         siteContentError,
         unreadAdminMessageCount,

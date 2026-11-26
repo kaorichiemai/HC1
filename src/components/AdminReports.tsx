@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { formatAppointmentTime } from '../appointmentSchedule';
 
 interface ReportAppointment {
   reference_code: string;
@@ -11,6 +12,7 @@ interface ReportAppointment {
   preferred_time: string;
   status: string;
   created_at: string;
+  completed_at: string | null;
 }
 
 function csvCell(value: string) {
@@ -35,7 +37,7 @@ export const AdminReports: React.FC<{ appointments: ReportAppointment[] }> = ({ 
   const exportCsv = () => {
     const columns: Array<keyof ReportAppointment> = [
       'reference_code', 'patient_name', 'phone', 'email', 'zone',
-      'service_name', 'preferred_date', 'preferred_time', 'status', 'created_at',
+      'service_name', 'preferred_date', 'preferred_time', 'status', 'created_at', 'completed_at',
     ];
     const rows = [
       columns.map((column) => csvCell(column.replaceAll('_', ' '))).join(','),
@@ -64,7 +66,7 @@ export const AdminReports: React.FC<{ appointments: ReportAppointment[] }> = ({ 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <label className="text-xs font-semibold text-[#66736f]">Appointment from<input type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} className="mt-1 block min-h-11 w-full border border-[#d9e1dc] px-3 text-sm text-[#17312e]" /></label>
           <label className="text-xs font-semibold text-[#66736f]">Appointment to<input type="date" value={toDate} min={fromDate || undefined} onChange={(event) => setToDate(event.target.value)} className="mt-1 block min-h-11 w-full border border-[#d9e1dc] px-3 text-sm text-[#17312e]" /></label>
-          <label className="text-xs font-semibold text-[#66736f]">Status<select value={status} onChange={(event) => setStatus(event.target.value)} className="mt-1 block min-h-11 w-full border border-[#d9e1dc] bg-white px-3 text-sm text-[#17312e]"><option value="all">All statuses</option><option value="pending">Pending</option><option value="confirmed">Accepted</option><option value="completed">Completed</option><option value="rejected">Rejected</option><option value="cancelled">Cancelled</option></select></label>
+          <label className="text-xs font-semibold text-[#66736f]">Status<select value={status} onChange={(event) => setStatus(event.target.value)} className="mt-1 block min-h-11 w-full border border-[#d9e1dc] bg-white px-3 text-sm text-[#17312e]"><option value="all">All statuses</option><option value="pending">Pending</option><option value="confirmed">Accepted</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></label>
           <label className="text-xs font-semibold text-[#66736f]">Service<select value={service} onChange={(event) => setService(event.target.value)} className="mt-1 block min-h-11 w-full border border-[#d9e1dc] bg-white px-3 text-sm text-[#17312e]"><option value="all">All services</option>{services.map((name) => <option key={name}>{name}</option>)}</select></label>
         </div>
       </div>
@@ -84,7 +86,7 @@ export const AdminReports: React.FC<{ appointments: ReportAppointment[] }> = ({ 
         <table className="w-full min-w-[720px] border-collapse text-left text-xs">
           <thead className="bg-[#f2f6f2] text-[10px] uppercase tracking-wide text-[#66736f]"><tr>{['Appointment date', 'Patient', 'Service', 'Status', 'Reference'].map((heading) => <th key={heading} className="px-3 py-3 font-bold">{heading}</th>)}</tr></thead>
           <tbody className="divide-y divide-[#edf1ee]">
-            {filtered.map((item) => <tr key={item.reference_code}><td className="px-3 py-3">{item.preferred_date} · {item.preferred_time}</td><td className="px-3 py-3 font-semibold">{item.patient_name}</td><td className="px-3 py-3">{item.service_name}</td><td className="px-3 py-3 capitalize">{item.status}</td><td className="px-3 py-3 font-mono">{item.reference_code}</td></tr>)}
+            {filtered.map((item) => <tr key={item.reference_code}><td className="px-3 py-3">{item.preferred_date} · {formatAppointmentTime(item.preferred_time)}</td><td className="px-3 py-3 font-semibold">{item.patient_name}</td><td className="px-3 py-3">{item.service_name}</td><td className="px-3 py-3 capitalize">{item.status}</td><td className="px-3 py-3 font-mono">{item.reference_code}</td></tr>)}
             {filtered.length === 0 && <tr><td colSpan={5} className="px-3 py-8 text-center text-[#87938c]">No appointment records match these filters.</td></tr>}
           </tbody>
         </table>
