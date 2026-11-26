@@ -149,6 +149,18 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         time: String(row.preferred_time),
         bookedCount: Number(row.booked_count),
       }));
+      const priorityResult = await db.execute(`
+        SELECT preferred_date, preferred_time, COUNT(*) AS priority_count
+        FROM appointment_requests
+        WHERE status = 'confirmed' AND priority_categories != ''
+        GROUP BY preferred_date, preferred_time
+        ORDER BY preferred_date ASC, preferred_time ASC
+      `);
+      const prioritySlots = priorityResult.rows.map((row) => ({
+        date: String(row.preferred_date),
+        time: String(row.preferred_time),
+        priorityCount: Number(row.priority_count),
+      }));
       const settingResult = await db.execute({
         sql: `SELECT appointment_date, time_slot, capacity, blocked
               FROM appointment_slot_settings
@@ -168,9 +180,9 @@ export default async function handler(request: ApiRequest, response: ApiResponse
           sql: `SELECT * FROM appointment_requests WHERE owner_uid = ? ORDER BY preferred_date ASC, preferred_time ASC`,
           args: [decoded.sub],
         });
-        return response.status(200).json({ slots, slotSettings, appointments: appointments.rows });
+        return response.status(200).json({ slots, prioritySlots, slotSettings, appointments: appointments.rows });
       }
-      return response.status(200).json({ slots, slotSettings });
+      return response.status(200).json({ slots, prioritySlots, slotSettings });
     } catch {
       return response.status(500).json({ error: 'Schedule data could not be loaded.' });
     }

@@ -9,6 +9,12 @@ interface ScheduleSlot {
   bookedCount: number;
 }
 
+interface PriorityScheduleSlot {
+  date: string;
+  time: string;
+  priorityCount: number;
+}
+
 function dateLabel(value: string) {
   return new Intl.DateTimeFormat('en-US', {
     timeZone: 'Asia/Manila', weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
@@ -20,6 +26,7 @@ export const AppointmentSchedule: React.FC = () => {
   const isFilipino = language === 'fil';
   const settings = siteContent.settings;
   const [slots, setSlots] = useState<ScheduleSlot[]>([]);
+  const [prioritySlots, setPrioritySlots] = useState<PriorityScheduleSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -29,9 +36,12 @@ export const AppointmentSchedule: React.FC = () => {
     void fetch('/api/appointments', { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error('Schedule unavailable');
-        return response.json() as Promise<{ slots: ScheduleSlot[] }>;
+        return response.json() as Promise<{ slots: ScheduleSlot[]; prioritySlots?: PriorityScheduleSlot[] }>;
       })
-      .then((data) => setSlots(data.slots))
+      .then((data) => {
+        setSlots(data.slots);
+        setPrioritySlots(data.prioritySlots ?? []);
+      })
       .catch((caught) => {
         if (caught instanceof DOMException && caught.name === 'AbortError') return;
         setError(isFilipino ? 'Hindi ma-load ang iskedyul.' : 'Schedule could not be loaded.');
@@ -56,6 +66,11 @@ export const AppointmentSchedule: React.FC = () => {
     return grouped;
   }, {});
   const dates = Object.keys(appointmentsByDate).filter((date) => date >= today).sort();
+  const priorityAppointmentsByDate = prioritySlots.reduce<Record<string, PriorityScheduleSlot[]>>((grouped, slot) => {
+    (grouped[slot.date] ??= []).push(slot);
+    return grouped;
+  }, {});
+  const priorityDates = Object.keys(priorityAppointmentsByDate).filter((date) => date >= today).sort();
 
   return (
     <section id="appointment-schedule" className="site-section-bg section-enter border-b border-[#dce7e1] py-8 sm:py-10">
@@ -121,6 +136,48 @@ export const AppointmentSchedule: React.FC = () => {
               }
             </div>
           )
+        )}
+        {!loading && !error && priorityDates.length > 0 && (
+          <section aria-labelledby="priority-schedule-title" className="mt-8 border-t border-[#dce7e1] pt-6">
+            <div className="mb-4">
+              <h3 id="priority-schedule-title" className="text-xl font-bold text-[#0f4d3c]">
+                {isFilipino ? 'Iskedyul ng mga priority appointment' : 'Priority Appointment Schedule'}
+              </h3>
+              <p className="mt-1 text-sm text-[#6b7280]">
+                {isFilipino
+                  ? 'Ipinapakita lamang ang oras at kabuuang bilang; pribado ang mga detalye ng pasyente.'
+                  : 'Only appointment times and totals are shown; patient details remain private.'}
+              </p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {priorityDates.flatMap((date) => priorityAppointmentsByDate[date]
+                .slice()
+                .sort((first, second) => {
+                  const firstMinutes = getAppointmentTimeMinutes(first.time)
+                    ?? (first.time === 'morning' ? 0 : first.time === 'afternoon' ? 720 : 1440);
+                  const secondMinutes = getAppointmentTimeMinutes(second.time)
+                    ?? (second.time === 'morning' ? 0 : second.time === 'afternoon' ? 720 : 1440);
+                  return firstMinutes - secondMinutes;
+                })
+                .map((slot) => (
+                  <article key={`${date}-${slot.time}`} className="site-card border-l-4 border-l-amber-500 p-5">
+                    <p className="text-[11px] font-bold uppercase tracking-wide text-[#2c7a5f]">{date}</p>
+                    <h4 className="mt-1 text-sm font-bold text-[#0f4d3c]">{dateLabel(date)}</h4>
+                    <div className="mt-4 flex items-center gap-2 border-t border-[#e7eee9] pt-4">
+                      <Clock3 className="h-5 w-5 shrink-0 text-amber-700" />
+                      <span className="text-base font-bold text-[#0f4d3c]">{formatAppointmentTime(slot.time)}</span>
+                    </div>
+                    <p className="mt-3 text-sm text-[#6b7280]">
+                      <strong className="text-[#374151]">{slot.priorityCount}</strong>{' '}
+                      {isFilipino
+                        ? (slot.priorityCount === 1 ? 'appointment na prayoridad' : 'mga appointment na prayoridad')
+                        : `priority ${slot.priorityCount === 1 ? 'appointment' : 'appointments'}`}
+                    </p>
+                  </article>
+                )))
+              }
+            </div>
+          </section>
         )}
         {!loading && !error && dates.length > 0 && (
           <div className="mt-5 flex flex-wrap items-start gap-x-8 gap-y-3 border-t border-[#dce7e1] pt-4 text-xs text-[#6b7280]">
