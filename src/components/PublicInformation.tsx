@@ -62,22 +62,6 @@ export const PublicInformation: React.FC = () => {
               <div className="space-y-4">
                 {updates.map((update) => (
                   <article key={update.id} className="overflow-hidden rounded-xl border border-white/70 bg-white shadow-md shadow-black/10">
-                    {update.imageUrl && (
-                      <button
-                        type="button"
-                        onClick={() => setViewingImage({ url: update.imageUrl!, alt: isFilipino ? update.titleFil : update.title })}
-                        aria-label={isFilipino ? `Tingnan ang buong larawan: ${update.titleFil}` : `View full image: ${update.title}`}
-                        className="group block w-full cursor-zoom-in overflow-hidden border-b border-[#e1e9e4] bg-[#f3f7f4] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#17645c]"
-                      >
-                        <img
-                          src={update.imageUrl}
-                          alt=""
-                          loading="lazy"
-                          decoding="async"
-                          className="mx-auto block h-auto w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
-                        />
-                      </button>
-                    )}
                     <div className="p-4 sm:p-5">
                       <div className="mb-2 flex flex-wrap items-center gap-2">
                         <span className="rounded-full bg-[#eaf3ee] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#17645c]">
@@ -98,6 +82,22 @@ export const PublicInformation: React.FC = () => {
                         {update.author}
                       </div>
                     </div>
+                    {update.imageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setViewingImage({ url: update.imageUrl!, alt: isFilipino ? update.titleFil : update.title })}
+                        aria-label={isFilipino ? `Tingnan ang buong larawan: ${update.titleFil}` : `View full image: ${update.title}`}
+                        className="group block w-full cursor-zoom-in overflow-hidden border-t border-[#e1e9e4] bg-[#f3f7f4] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#17645c]"
+                      >
+                        <img
+                          src={update.imageUrl}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          className="mx-auto block h-auto w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+                        />
+                      </button>
+                    )}
                   </article>
                 ))}
               </div>
