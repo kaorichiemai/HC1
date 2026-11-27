@@ -1,7 +1,188 @@
 import React, { useEffect, useState } from 'react';
-import { SignIn, SignUp } from '@clerk/react';
+import { SignIn, useSignUp } from '@clerk/react';
 import { X } from 'lucide-react';
 import centerPhoto from '../assets/images/MR FLORES.png';
+
+const AuthField = ({
+  id,
+  label,
+  type = 'text',
+  value,
+  onChange,
+  error,
+  autoComplete,
+}: {
+  id: string;
+  label: string;
+  type?: string;
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+  autoComplete?: string;
+}) => (
+  <div>
+    <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-zinc-800">
+      {label}
+    </label>
+    <input
+      id={id}
+      name={id}
+      type={type}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      autoComplete={autoComplete}
+      required
+      aria-invalid={Boolean(error)}
+      aria-describedby={error ? `${id}-error` : undefined}
+      className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
+    />
+    {error && (
+      <p id={`${id}-error`} className="mt-1 text-sm text-rose-600">
+        {error}
+      </p>
+    )}
+  </div>
+);
+
+const CustomSignUpForm: React.FC = () => {
+  const { signUp, errors, fetchStatus } = useSignUp();
+  const [emailAddress, setEmailAddress] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [requestError, setRequestError] = useState('');
+  const passwordsMatch = password === confirmPassword;
+  const isFetching = fetchStatus === 'fetching';
+
+  const handleSignUp = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setRequestError('');
+
+    if (!passwordsMatch) return;
+
+    const { error } = await signUp.password({ emailAddress, password });
+    if (error) {
+      setRequestError(error.message);
+      return;
+    }
+
+    const verification = await signUp.verifications.sendEmailCode();
+    if (verification.error) {
+      setRequestError(verification.error.message);
+      return;
+    }
+
+    setVerificationSent(true);
+  };
+
+  const handleVerify = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setRequestError('');
+
+    const { error } = await signUp.verifications.verifyEmailCode({ code: verificationCode });
+    if (error) {
+      setRequestError(error.message);
+      return;
+    }
+
+    if (signUp.status !== 'complete') {
+      setRequestError('Your sign-up could not be completed. Please check your account details and try again.');
+      return;
+    }
+
+    const finalization = await signUp.finalize();
+    if (finalization.error) setRequestError(finalization.error.message);
+  };
+
+  const emailError = errors.fields.emailAddress?.message;
+  const passwordError = errors.fields.password?.message;
+  const codeError = errors.fields.code?.message;
+  const confirmPasswordError =
+    confirmPassword.length > 0 && !passwordsMatch ? 'Passwords do not match.' : undefined;
+
+  return verificationSent ? (
+    <form onSubmit={handleVerify} className="space-y-4">
+      <div className="mb-5 text-center">
+        <h2 className="text-xl font-semibold text-zinc-900">Verify your email</h2>
+        <p className="mt-1 text-sm text-zinc-600">
+          Enter the verification code sent to {emailAddress}.
+        </p>
+      </div>
+      <AuthField
+        id="verification-code"
+        label="Verification code"
+        value={verificationCode}
+        onChange={setVerificationCode}
+        error={codeError}
+        autoComplete="one-time-code"
+      />
+      {requestError && <p role="alert" className="text-sm text-rose-600">{requestError}</p>}
+      <button
+        type="submit"
+        disabled={isFetching}
+        className="w-full rounded-md bg-[#8b00ff] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#7600db] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {isFetching ? 'Verifying...' : 'Verify email'}
+      </button>
+      <button
+        type="button"
+        disabled={isFetching}
+        onClick={async () => {
+          setRequestError('');
+          const { error } = await signUp.verifications.sendEmailCode();
+          if (error) setRequestError(error.message);
+        }}
+        className="w-full text-sm font-medium text-purple-700 hover:text-purple-800 disabled:opacity-60"
+      >
+        Resend code
+      </button>
+    </form>
+  ) : (
+    <form onSubmit={handleSignUp} className="space-y-4">
+      <div className="mb-5 text-center">
+        <h2 className="text-xl font-semibold text-zinc-900">Create an account</h2>
+        <p className="mt-1 text-sm text-zinc-600">Sign up to access your health center account.</p>
+      </div>
+      <AuthField
+        id="email-address"
+        label="Email address"
+        type="email"
+        value={emailAddress}
+        onChange={setEmailAddress}
+        error={emailError}
+        autoComplete="email"
+      />
+      <AuthField
+        id="password"
+        label="Password"
+        type="password"
+        value={password}
+        onChange={setPassword}
+        error={passwordError}
+        autoComplete="new-password"
+      />
+      <AuthField
+        id="confirm-password"
+        label="Confirm password"
+        type="password"
+        value={confirmPassword}
+        onChange={setConfirmPassword}
+        error={confirmPasswordError}
+        autoComplete="new-password"
+      />
+      {requestError && <p role="alert" className="text-sm text-rose-600">{requestError}</p>}
+      <div id="clerk-captcha" />
+      <button
+        type="submit"
+        disabled={isFetching || !passwordsMatch || !confirmPassword}
+        className="w-full rounded-md bg-[#8b00ff] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#7600db] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {isFetching ? 'Creating account...' : 'Continue'}
+      </button>
+    </form>
+  );
+};
 
 export const AuthScreen: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -74,7 +255,7 @@ export const AuthScreen: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
         <div className="min-w-0 px-3 py-5 sm:px-8 sm:py-7">
           {isRegistering ? (
-            <SignUp routing="hash" signInUrl="#" appearance={signUpAppearance} />
+            <CustomSignUpForm />
           ) : (
             <SignIn routing="hash" signUpUrl="#" appearance={signInAppearance} />
           )}
