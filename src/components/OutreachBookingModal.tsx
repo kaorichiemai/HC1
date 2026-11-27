@@ -44,6 +44,8 @@ const priorityCategoryOptions = [
   { value: 'pregnant_lactating', label: 'Pregnant or lactating' },
 ] as const;
 
+const APPOINTMENT_MESSAGE_DELAY_MS = 7000;
+
 export const OutreachBookingModal: React.FC = () => {
   const { getToken } = useAuth();
   const { user } = useUser();
@@ -429,9 +431,11 @@ export const OutreachBookingModal: React.FC = () => {
       });
       markAppointmentRequestStatus(result.status);
       setReceipt(result);
-      window.dispatchEvent(new CustomEvent('open-appointment-message', {
-        detail: { referenceCode: result.referenceCode },
-      }));
+      window.setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('open-appointment-message', {
+          detail: { referenceCode: result.referenceCode },
+        }));
+      }, APPOINTMENT_MESSAGE_DELAY_MS);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Could not submit your appointment request.');
     } finally {
