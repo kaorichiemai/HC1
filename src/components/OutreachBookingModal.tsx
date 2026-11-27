@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useHealthCenter } from '../context/HealthCenterContext';
 import { AlertCircle, CalendarDays, CheckCircle2, Clock, X } from 'lucide-react';
-import { useAuth } from '@clerk/react';
+import { useAuth, useUser } from '@clerk/react';
+import { formatPhilippinePhoneNumber, isValidPhilippinePhoneNumber, normalizePhilippinePhoneNumber } from '../philippinePhone';
 import {
   APPOINTMENT_TIME_SLOTS,
   formatAppointmentTime,
@@ -44,6 +45,7 @@ const priorityCategoryOptions = [
 
 export const OutreachBookingModal: React.FC = () => {
   const { getToken } = useAuth();
+  const { user } = useUser();
   const {
     t,
     language,
@@ -157,6 +159,27 @@ export const OutreachBookingModal: React.FC = () => {
   }, [bookingModalOpen]);
 
   useEffect(() => {
+    if (!bookingModalOpen || !user) return;
+
+    const middleName = typeof user.unsafeMetadata.middleName === 'string'
+      ? user.unsafeMetadata.middleName.trim()
+      : '';
+    const suffix = typeof user.unsafeMetadata.suffix === 'string'
+      ? user.unsafeMetadata.suffix.trim()
+      : '';
+    const fullName = [user.firstName, middleName, user.lastName, suffix]
+      .filter((name): name is string => Boolean(name?.trim()))
+      .join(' ');
+    const savedContactNumber = typeof user.unsafeMetadata.contactNumber === 'string'
+      ? user.unsafeMetadata.contactNumber
+      : user.primaryPhoneNumber?.phoneNumber || '';
+    const phoneDigits = normalizePhilippinePhoneNumber(savedContactNumber);
+
+    if (fullName) setPatientName((current) => current || fullName);
+    if (phoneDigits) setPhone((current) => current || phoneDigits);
+  }, [bookingModalOpen, user]);
+
+  useEffect(() => {
     if (!bookingModalOpen) {
       setPendingRequestLoaded(false);
       return;
@@ -248,8 +271,10 @@ export const OutreachBookingModal: React.FC = () => {
       setError(isFilipino ? 'Hindi available ang appointment request sa ngayon.' : 'Appointment request availability is still being checked.');
       return;
     }
-    if (phone.replace(/\D/g, '').length < 7) {
-      setError(isFilipino ? 'Maglagay ng wastong contact number na may hindi bababa sa 7 digit.' : 'Enter a valid contact number with at least 7 digits.');
+    if (!isValidPhilippinePhoneNumber(phone)) {
+      setError(isFilipino
+        ? 'Maglagay ng wastong Philippine mobile number na may 10 digit pagkatapos ng +63.'
+        : 'Enter a valid Philippine mobile number with 10 digits after +63.');
       return;
     }
     if (slotUnavailable) {
@@ -266,7 +291,7 @@ export const OutreachBookingModal: React.FC = () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           patientName,
-          phone,
+          phone: formatPhilippinePhoneNumber(phone),
           age: Number(age),
           address,
           chiefComplaint,
@@ -417,7 +442,27 @@ export const OutreachBookingModal: React.FC = () => {
               </div>
               <div>
                 <label htmlFor="appointment-phone" className="mb-1 block text-sm font-semibold text-slate-800">{t.formPhone} *</label>
-                <input id="appointment-phone" required type="tel" inputMode="tel" autoComplete="tel" minLength={7} maxLength={32} value={phone} onChange={(event) => setPhone(event.target.value)} placeholder="09XX XXX XXXX" className="min-h-12 w-full rounded-md border border-slate-300 px-3.5 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700" />
+                <div className="flex">
+                  <span className="inline-flex min-h-12 items-center rounded-l-md border border-r-0 border-slate-300 bg-slate-50 px-3.5 text-base text-slate-700">+63</span>
+                  <input
+                    id="appointment-phone"
+                    required
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel-national"
+                    minLength={10}
+                    maxLength={16}
+                    pattern="9[0-9]{9}"
+                    value={phone}
+                    onChange={(event) => setPhone(normalizePhilippinePhoneNumber(event.target.value))}
+                    placeholder="9XX XXX XXXX"
+                    aria-describedby="appointment-phone-hint"
+                    className="min-h-12 w-full rounded-r-md border border-slate-300 px-3.5 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-teal-700"
+                  />
+                </div>
+                <p id="appointment-phone-hint" className="mt-1 text-xs text-slate-600">
+                  {isFilipino ? 'Maglagay ng 10 digit na nagsisimula sa 9.' : 'Enter 10 digits starting with 9.'}
+                </p>
               </div>
               <div>
                 <label htmlFor="appointment-address" className="mb-1 block text-sm font-semibold text-slate-800">{isFilipino ? 'Tirahan' : 'Address'} *</label>

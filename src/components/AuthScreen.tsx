@@ -2,6 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { SignIn, useSignUp } from '@clerk/react';
 import { Eye, EyeOff, X } from 'lucide-react';
 import centerPhoto from '../assets/images/MR FLORES.png';
+import { formatPhilippinePhoneNumber, isValidPhilippinePhoneNumber, normalizePhilippinePhoneNumber } from '../philippinePhone';
+
+const USERNAME_PATTERN = /^[a-z][a-z0-9_]{2,19}$/;
+const USERNAME_HINT = 'Use 3–20 lowercase letters, numbers, or underscores; start with a letter.';
 
 const AuthField = ({
   id,
@@ -10,9 +14,13 @@ const AuthField = ({
   value,
   onChange,
   error,
+  hint,
   autoComplete,
   required = true,
   reveal,
+  minLength,
+  maxLength,
+  pattern,
 }: {
   id: string;
   label: string;
@@ -20,9 +28,13 @@ const AuthField = ({
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  hint?: string;
   autoComplete?: string;
   required?: boolean;
   reveal?: { isVisible: boolean; onToggle: () => void };
+  minLength?: number;
+  maxLength?: number;
+  pattern?: string;
 }) => (
   <div>
     <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-zinc-800">
@@ -37,8 +49,11 @@ const AuthField = ({
         onChange={(event) => onChange(event.target.value)}
         autoComplete={autoComplete}
         required={required}
+        minLength={minLength}
+        maxLength={maxLength}
+        pattern={pattern}
         aria-invalid={Boolean(error)}
-        aria-describedby={error ? `${id}-error` : undefined}
+        aria-describedby={[hint && `${id}-hint`, error && `${id}-error`].filter(Boolean).join(' ') || undefined}
         className={`w-full rounded-md border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 ${
           reveal ? 'pr-11' : ''
         }`}
@@ -55,6 +70,11 @@ const AuthField = ({
         </button>
       )}
     </div>
+    {hint && (
+      <p id={`${id}-hint`} className="mt-1 text-xs text-zinc-600">
+        {hint}
+      </p>
+    )}
     {error && (
       <p id={`${id}-error`} className="mt-1 text-sm text-rose-600">
         {error}
@@ -70,6 +90,7 @@ const CustomSignUpForm: React.FC = () => {
   const [surname, setSurname] = useState('');
   const [suffix, setSuffix] = useState('');
   const [username, setUsername] = useState('');
+  const [contactNumber, setContactNumber] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -83,6 +104,14 @@ const CustomSignUpForm: React.FC = () => {
     setRequestError('');
 
     if (!passwordsMatch) return;
+    if (!USERNAME_PATTERN.test(username)) {
+      setRequestError(USERNAME_HINT);
+      return;
+    }
+    if (!isValidPhilippinePhoneNumber(contactNumber)) {
+      setRequestError('Enter a valid Philippine mobile number with 10 digits after +63.');
+      return;
+    }
 
     const { error } = await signUp.password({
       username,
@@ -91,6 +120,7 @@ const CustomSignUpForm: React.FC = () => {
       lastName: surname,
       unsafeMetadata: {
         middleName,
+        contactNumber: formatPhilippinePhoneNumber(contactNumber),
         ...(suffix.trim() ? { suffix: suffix.trim() } : {}),
       },
     });
@@ -110,7 +140,8 @@ const CustomSignUpForm: React.FC = () => {
     if (finalization.error) setRequestError(finalization.error.message);
   };
 
-  const usernameError = errors.fields.username?.message;
+  const usernameFormatError = username && !USERNAME_PATTERN.test(username) ? USERNAME_HINT : undefined;
+  const usernameError = errors.fields.username?.message || usernameFormatError;
   const passwordError = errors.fields.password?.message;
   const confirmPasswordError =
     confirmPassword.length > 0 && !passwordsMatch ? 'Passwords do not match.' : undefined;
@@ -167,10 +198,42 @@ const CustomSignUpForm: React.FC = () => {
         id="username"
         label="Username"
         value={username}
-        onChange={setUsername}
+        onChange={(value) => setUsername(value.toLowerCase())}
         error={usernameError}
+        hint={USERNAME_HINT}
         autoComplete="username"
+        minLength={3}
+        maxLength={20}
+        pattern="[a-z][a-z0-9_]{2,19}"
       />
+      <div>
+        <label htmlFor="signup-contact-number" className="mb-1.5 block text-sm font-medium text-zinc-800">
+          Contact number
+        </label>
+        <div className="flex">
+          <span className="inline-flex items-center rounded-l-md border border-r-0 border-zinc-300 bg-zinc-50 px-3 text-sm text-zinc-700">
+            +63
+          </span>
+          <input
+            id="signup-contact-number"
+            name="contact-number"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel-national"
+            value={contactNumber}
+            onChange={(event) => setContactNumber(normalizePhilippinePhoneNumber(event.target.value))}
+            required
+            minLength={10}
+            maxLength={16}
+            pattern="9[0-9]{9}"
+            aria-describedby="signup-contact-number-hint"
+            className="w-full rounded-r-md border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
+          />
+        </div>
+        <p id="signup-contact-number-hint" className="mt-1 text-xs text-zinc-600">
+          Enter 10 digits starting with 9.
+        </p>
+      </div>
       <AuthField
         id="password"
         label="Password"
