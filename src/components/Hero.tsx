@@ -15,7 +15,7 @@ export const Hero: React.FC = () => {
   const clinicAddress = language === 'fil' ? siteContent.settings.clinicAddressFil : siteContent.settings.clinicAddress;
   const clinicHours = language === 'fil' ? siteContent.settings.clinicHoursFil : siteContent.settings.clinicHours;
   const clinicPhone = siteContent.settings.contactPhone;
-  const clinicPhones = clinicPhone.split(/\s+and\s+|\/|,/i).map((phone) => phone.trim()).filter(Boolean);
+  const clinicPhones = clinicPhone.split(/\s+(?:and|or)\s+|\/|,/i).map((phone) => phone.trim()).filter(Boolean);
   const bookingEnabled = appointmentRequestAvailability === 'available';
   const handleScrollTo = (id: string) => {
     setActiveSection(id);
@@ -70,16 +70,18 @@ export const Hero: React.FC = () => {
                   : 'Call our staff and we can help you book an appointment.'}
               </p>
               <div className="mt-4 rounded-md bg-white px-3 py-1 text-[#0f4d3c]">
-                {clinicPhones.map((phone) => (
-                  <a
-                    key={phone}
-                    href={`tel:${getPhoneLink(phone)}`}
-                    aria-label={`${language === 'fil' ? 'Tumawag sa' : 'Call'} ${phone}`}
-                    className="flex min-h-9 items-center justify-center gap-2 px-1 text-sm font-bold transition-colors hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800"
-                  >
-                    <PhoneCall className="h-4 w-4 shrink-0" aria-hidden="true" />
-                    {language === 'fil' ? 'Tumawag sa' : 'Call'} {phone}
-                  </a>
+                {clinicPhones.map((phone, index) => (
+                  <React.Fragment key={phone}>
+                    {index > 0 && <p className="py-0.5 text-center text-xs font-medium text-slate-500">{language === 'fil' ? 'o' : 'or'}</p>}
+                    <a
+                      href={`tel:${getPhoneLink(phone)}`}
+                      aria-label={`${language === 'fil' ? 'Tumawag sa' : 'Call'} ${phone}`}
+                      className="flex min-h-9 items-center justify-center gap-2 px-1 text-sm font-bold transition-colors hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800"
+                    >
+                      <PhoneCall className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      {language === 'fil' ? 'Tumawag sa' : 'Call'} {phone}
+                    </a>
+                  </React.Fragment>
                 ))}
               </div>
             </aside>

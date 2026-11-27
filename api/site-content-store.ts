@@ -72,8 +72,13 @@ export async function ensureSiteContent(db: ReturnType<typeof createClient>) {
       {
         sql: `UPDATE clinic_public_settings
               SET setting_value = ?, updated_at = ?, updated_by = 'system-seed'
-              WHERE setting_key = 'contactPhone' AND setting_value = ?`,
-        args: [DEFAULT_CLINIC_PUBLIC_SETTINGS.contactPhone, now, '(02) 8642-5159'],
+              WHERE setting_key = 'contactPhone' AND setting_value IN (?, ?)`,
+        args: [
+          DEFAULT_CLINIC_PUBLIC_SETTINGS.contactPhone,
+          now,
+          '(02) 8642-5159',
+          '+63 (2) 8643 3486 and +63 (2) 643 3486 / 8424 8370',
+        ],
       },
     ], 'write');
   })().catch((error: unknown) => {

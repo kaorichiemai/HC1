@@ -19,7 +19,7 @@ export const DEFAULT_CLINIC_PUBLIC_SETTINGS: ClinicPublicSettings = {
   dentalHoursFil: 'Dental: Lunes, Miyerkules, Biyernes',
   clinicAddress: 'P. Herrera Street, Barangay San Pedro, Pateros, Metro Manila, Philippines',
   clinicAddressFil: 'P. Herrera Street, Barangay San Pedro, Pateros, Metro Manila, Philippines',
-  contactPhone: '+63 (2) 8643 3486 and +63 (2) 643 3486 / 8424 8370',
+  contactPhone: '+63 (2) 8643 3486 or +63 (2) 643 3486',
   contactEmail: 'mrfloreshealthcenter@gmail.com',
   emergencyPhone: '(02) 8642-5159',
   emergencyPhoneFil: '(02) 8642-5159',
