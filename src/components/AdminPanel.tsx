@@ -16,6 +16,8 @@ interface AppointmentRow {
   address: string | null;
   chief_complaint: string | null;
   age: number | null;
+  guardian_name: string | null;
+  guardian_relationship: string | null;
   priority_categories: string;
   attendance_consent: number;
   zone: string;
@@ -42,6 +44,7 @@ const priorityCategoryLabels = {
   pwd: 'Person with disability (PWD)',
   senior_citizen: 'Senior citizen',
   pregnant_lactating: 'Pregnant or lactating',
+  animal_bite: 'Animal Bite (urgent rabies vaccination)',
 };
 
 function getPriorityCategoryLabels(value: string) {
@@ -338,6 +341,7 @@ export const AdminPanel: React.FC = () => {
                   <dl className="mt-6 space-y-4 border-y border-[#edf1ee] py-5 text-sm">
                     <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Preferred appointment</dt><dd className="mt-1 font-medium">{selected.preferred_date} · {formatAppointmentTime(selected.preferred_time)}</dd></div>
                     {selected.age !== null && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Age</dt><dd className="mt-1 font-medium">{selected.age}</dd></div>}
+                    {selected.guardian_name && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Parent / guardian</dt><dd className="mt-1 font-medium">{selected.guardian_name}{selected.guardian_relationship ? ` (${selected.guardian_relationship})` : ''}</dd></div>}
                     {getPriorityCategoryLabels(selected.priority_categories ?? '').length > 0 && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Priority categories</dt><dd className="mt-1 font-medium">{getPriorityCategoryLabels(selected.priority_categories ?? '').join(', ')}</dd></div>}
                     {selected.completed_at && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Marked completed</dt><dd className="mt-1 font-medium">{new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(selected.completed_at))}</dd></div>}
                     <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Barangay</dt><dd className="mt-1 font-medium">{selected.zone}</dd></div>

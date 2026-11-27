@@ -48,8 +48,12 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
       address TEXT,
       chief_complaint TEXT,
       age INTEGER,
+      guardian_name TEXT,
+      guardian_relationship TEXT,
+      guardian_consent INTEGER NOT NULL DEFAULT 0,
       priority_categories TEXT NOT NULL DEFAULT '',
       attendance_consent INTEGER NOT NULL DEFAULT 0,
+      early_arrival_consent INTEGER NOT NULL DEFAULT 0,
       zone TEXT NOT NULL,
       service_id TEXT NOT NULL,
       service_name TEXT NOT NULL,
@@ -118,6 +122,18 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
   }
   if (!columnNames.has('age')) {
     await db.execute('ALTER TABLE appointment_requests ADD COLUMN age INTEGER');
+  }
+  if (!columnNames.has('guardian_name')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN guardian_name TEXT');
+  }
+  if (!columnNames.has('guardian_relationship')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN guardian_relationship TEXT');
+  }
+  if (!columnNames.has('guardian_consent')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN guardian_consent INTEGER NOT NULL DEFAULT 0');
+  }
+  if (!columnNames.has('early_arrival_consent')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN early_arrival_consent INTEGER NOT NULL DEFAULT 0');
   }
   if (!columnNames.has('priority_categories')) {
     await db.execute("ALTER TABLE appointment_requests ADD COLUMN priority_categories TEXT NOT NULL DEFAULT ''");

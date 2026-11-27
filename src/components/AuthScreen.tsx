@@ -89,6 +89,7 @@ const CustomSignUpForm: React.FC = () => {
   const [middleName, setMiddleName] = useState('');
   const [surname, setSurname] = useState('');
   const [suffix, setSuffix] = useState('');
+  const [gender, setGender] = useState('');
   const [username, setUsername] = useState('');
   const [contactNumber, setContactNumber] = useState('');
   const [password, setPassword] = useState('');
@@ -120,6 +121,7 @@ const CustomSignUpForm: React.FC = () => {
       lastName: surname,
       unsafeMetadata: {
         middleName,
+        gender,
         contactNumber: formatPhilippinePhoneNumber(contactNumber),
         ...(suffix.trim() ? { suffix: suffix.trim() } : {}),
       },
@@ -173,6 +175,25 @@ const CustomSignUpForm: React.FC = () => {
         onChange={setSurname}
         autoComplete="family-name"
       />
+      <div>
+        <label htmlFor="sex-gender" className="mb-1.5 block text-sm font-medium text-zinc-800">
+          Sex/Gender
+        </label>
+        <select
+          id="sex-gender"
+          name="sex-gender"
+          required
+          value={gender}
+          onChange={(event) => setGender(event.target.value)}
+          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
+        >
+          <option value="" disabled>Select an option</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+          <option value="Prefer not to say">Prefer not to say</option>
+        </select>
+      </div>
       <div>
         <label htmlFor="suffix" className="mb-1.5 block text-sm font-medium text-zinc-800">
           Suffix (optional)
