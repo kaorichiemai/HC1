@@ -181,8 +181,8 @@ function answerWebsiteQuestion(question: string, content: Awaited<ReturnType<typ
 
   if (hasAnyTerm(normalizedQuestion, ['price', 'cost', 'fee', 'free', 'magkano', 'libre'])) {
     return isFilipino
-      ? `Wala akong kumpirmadong impormasyon tungkol sa bayad sa website. Tumawag sa ${content.settings.contactPhone} o piliin ang “Clinic staff” para makumpirma.`
-      : `I couldn't confirm fees or costs from the website information. Call ${content.settings.contactPhone} or choose “Clinic staff” to confirm.`;
+      ? `Wala akong kumpirmadong impormasyon tungkol sa bayad sa website. Tumawag sa ${content.settings.contactPhone} o mag-email sa ${content.settings.contactEmail} para makumpirma.`
+      : `I couldn't confirm fees or costs from the website information. Call ${content.settings.contactPhone} or email ${content.settings.contactEmail} to confirm.`;
   }
 
   const service = content.services.find((item) => {
@@ -231,13 +231,13 @@ function answerWebsiteQuestion(question: string, content: Awaited<ReturnType<typ
   ) {
     if (hasAnyTerm(normalizedQuestion, ['reschedule', 'cancel', 'kansela', 'change appointment', 'edit appointment'])) {
       return isFilipino
-        ? `Para magkansela o magtanong tungkol sa pagbabago ng appointment, piliin ang “Clinic staff” sa chat. Maaari ring gamitin ang “Cancel appointment” button kung available sa iyong request.`
-        : 'To cancel or ask about changing an appointment, choose “Clinic staff” in this chat. You can also use the “Cancel appointment” button when it is available for your request.';
+        ? `Para magkansela, gamitin ang “Cancel appointment” button kung available sa iyong request. Para magtanong tungkol sa pagbabago ng appointment, tumawag sa ${content.settings.contactPhone}.`
+        : `To cancel, use the “Cancel appointment” button when it is available for your request. For other appointment changes, call ${content.settings.contactPhone}.`;
     }
     if (hasAnyTerm(normalizedQuestion, ['status', 'confirmed', 'accepted', 'pending', 'rejected', 'completed'])) {
       return isFilipino
-        ? 'Makikita ang pinakabagong status sa appointment card at mensahe sa chat na ito. Ang “Confirmed” ay tinanggap na; ang “Pending” ay hinihintay pa ng pagsusuri. Para sa detalye, piliin ang “Clinic staff”.'
-        : 'Check the appointment card and messages in this chat for the latest status. “Confirmed” means accepted; “Pending” means it is still under review. Choose “Clinic staff” if you need help with your request.';
+        ? `Makikita ang pinakabagong status sa appointment card at mensahe sa chat na ito. Ang “Confirmed” ay tinanggap na; ang “Pending” ay hinihintay pa ng pagsusuri. Para sa tulong, tumawag sa ${content.settings.contactPhone}.`
+        : `Check the appointment card and messages in this chat for the latest status. “Confirmed” means accepted; “Pending” means it is still under review. Call ${content.settings.contactPhone} if you need help.`;
     }
     if (hasAnyTerm(normalizedQuestion, ['available', 'availability', 'open slot', 'free slot', 'bakante', 'available date'])) {
       return isFilipino
@@ -297,8 +297,8 @@ function answerWebsiteQuestion(question: string, content: Awaited<ReturnType<typ
   }
 
   return isFilipino
-    ? `Wala akong kumpirmadong sagot mula sa impormasyon ng website. Maaari mong piliin ang “Clinic staff” sa chat o tumawag sa ${content.settings.contactPhone}.`
-    : `I couldn't find a confirmed answer in the website information. Choose “Clinic staff” in this chat or call ${content.settings.contactPhone}.`;
+    ? `Wala akong kumpirmadong sagot mula sa impormasyon ng website. Tumawag sa ${content.settings.contactPhone} o mag-email sa ${content.settings.contactEmail} para sa tulong.`
+    : `I couldn't find a confirmed answer in the website information. Call ${content.settings.contactPhone} or email ${content.settings.contactEmail} for help.`;
 }
 
 export default async function handler(request: ApiRequest, response: ApiResponse) {
