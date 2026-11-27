@@ -6,9 +6,7 @@ import { verifyToken } from '@clerk/backend';
 import { clinicPublicSettingKeys, ensureSiteContent, getContentDatabase, readSiteContent, validateSiteContent } from './site-content-store.js';
 import {
   formatAppointmentTime,
-  getAppointmentTimeMinutes,
   getAppointmentTimePeriod,
-  getManilaAppointmentClock,
 } from '../src/appointmentSchedule.js';
 
 type ApiRequest = IncomingMessage & { body?: unknown; headers: IncomingMessage['headers'] & { authorization?: string } };
@@ -93,12 +91,6 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
       read_at TEXT NOT NULL,
       PRIMARY KEY (appointment_id, user_uid)
     )`,
-    `CREATE TABLE IF NOT EXISTS appointment_reminders (
-      appointment_id TEXT NOT NULL,
-      reminder_type TEXT NOT NULL,
-      sent_at TEXT NOT NULL,
-      PRIMARY KEY (appointment_id, reminder_type)
-    )`,
   ], 'write');
   const columns = await db.execute('PRAGMA table_info(appointment_requests)');
   const columnNames = new Set(columns.rows.map((column) => String(column.name)));
@@ -173,53 +165,6 @@ function isAdmin(decoded: Awaited<ReturnType<typeof authenticate>>) {
     && allowedEmails.includes(decoded.email.toLowerCase());
 }
 
-async function createDueAppointmentReminders(db: ReturnType<typeof createClient>, userUid: string) {
-  const now = new Date();
-  const clock = getManilaAppointmentClock(now);
-  const appointments = await db.execute({
-    sql: `SELECT id, service_name, preferred_date, preferred_time
-          FROM appointment_requests
-          WHERE owner_uid = ? AND status = 'confirmed'
-            AND preferred_date = ? AND chat_status != 'deleted'`,
-    args: [userUid, clock.date],
-  });
-
-  for (const appointment of appointments.rows) {
-    const appointmentTime = String(appointment.preferred_time);
-    const appointmentMinutes = getAppointmentTimeMinutes(appointmentTime);
-    if (appointmentMinutes === null
-      || clock.minutes < appointmentMinutes - 60
-      || clock.minutes >= appointmentMinutes) continue;
-
-    const appointmentId = String(appointment.id);
-    const sentAt = now.toISOString();
-    const transaction = await db.transaction('write');
-    try {
-      const claim = await transaction.execute({
-        sql: `INSERT OR IGNORE INTO appointment_reminders (appointment_id, reminder_type, sent_at)
-              VALUES (?, 'one_hour_before', ?)`,
-        args: [appointmentId, sentAt],
-      });
-      if (claim.rowsAffected > 0) {
-        const time = formatAppointmentTime(appointmentTime);
-        const service = String(appointment.service_name);
-        const date = String(appointment.preferred_date);
-        const message = `This is an automated reminder.\n\nYour appointment for ${service} is scheduled for ${date} at ${time}. Please arrive on time.\n\nFilipino:\nAwtomatikong paalala ito. Nakatakda ang iyong appointment para sa ${service} sa ${date}, ganap na ${time}. Mangyaring dumating sa oras.`;
-        await transaction.execute({
-          sql: `INSERT INTO appointment_messages
-                (id, appointment_id, sender_uid, sender_role, sender_name, message, created_at)
-                VALUES (?, ?, 'clinic-system', 'admin', 'Health Center', ?, ?)`,
-          args: [randomUUID(), appointmentId, message, sentAt],
-        });
-      }
-      await transaction.commit();
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
-  }
-}
-
 export default async function handler(request: ApiRequest, response: ApiResponse) {
   response.setHeader('Cache-Control', 'no-store');
   const decoded = await authenticate(request);
@@ -249,7 +194,6 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   if (request.method === 'GET' && mode === 'unread_messages') {
     if (admin) return response.status(200).json({ unreadCount: 0 });
     try {
-      await createDueAppointmentReminders(db, decoded.sub);
       const result = await db.execute({
         sql: `SELECT COUNT(*) AS unread_count
               FROM appointment_messages AS message
@@ -259,6 +203,8 @@ export default async function handler(request: ApiRequest, response: ApiResponse
               WHERE appointment.owner_uid = ?
                 AND appointment.chat_status != 'deleted'
                 AND message.sender_role = 'admin'
+                AND message.message NOT LIKE 'This is an automated reminder.%'
+                AND message.message NOT LIKE 'Reminder: Your appointment%'
                 AND (chat_read.read_at IS NULL OR message.created_at > chat_read.read_at)`,
         args: [decoded.sub, decoded.sub],
       });

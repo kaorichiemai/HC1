@@ -24,6 +24,10 @@ interface UserMessage {
   created_at: string;
 }
 
+const isAutomatedReminder = (message: UserMessage) => message.sender_role === 'admin'
+  && (message.message.startsWith('This is an automated reminder.')
+    || message.message.startsWith('Reminder: Your appointment'));
+
 const getDisplayMessage = (message: string) => {
   const legacyConfirmation = message.match(
     /^Your appointment for (.+) on (\d{4}-\d{2}-\d{2}) at (.+?) has been automatically confirmed\. You can view this schedule in your appointment chat\./,
@@ -66,7 +70,7 @@ export const UserAppointmentChat: React.FC = () => {
       });
       setLastStatuses(Object.fromEntries(normalizedAppointments.map((appointment) => [appointment.id, appointment.status])));
       setAppointments(normalizedAppointments);
-      setMessages(data.messages);
+      setMessages(data.messages.filter((message) => !isAutomatedReminder(message)));
       setError('');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Appointment chat could not be loaded.');

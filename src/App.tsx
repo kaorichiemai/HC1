@@ -10,7 +10,7 @@ import { PublicInformation } from './components/PublicInformation';
 import { AppointmentSchedule } from './components/AppointmentSchedule';
 import { Footer } from './components/Footer';
 import { OutreachBookingModal } from './components/OutreachBookingModal';
-import { CheckCircle2, Clock3, MessageCircle, X } from 'lucide-react';
+import { CheckCircle2, Clock3, MessageCircleMore, X } from 'lucide-react';
 import { AuthScreen } from './components/AuthScreen';
 import { AdminPanel } from './components/AdminPanel';
 import { UserAppointmentChat } from './components/UserAppointmentChat';
@@ -76,7 +76,7 @@ const AppContent: React.FC = () => {
           title={unreadMessagesError || (unreadAdminMessageCount > 0 ? `${unreadAdminMessageCount} unread message${unreadAdminMessageCount === 1 ? '' : 's'}` : 'Messages')}
           className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-[max(1.25rem,env(safe-area-inset-right))] z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#0f4d3c] text-white shadow-lg ring-2 ring-white transition-colors hover:bg-[#17645c] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#17645c] xl:hidden"
         >
-          <MessageCircle className="h-6 w-6" aria-hidden="true" />
+          <MessageCircleMore className="h-7 w-7" aria-hidden="true" />
           {unreadAdminMessageCount > 0 && (
             <span aria-hidden="true" className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white">
               {unreadAdminMessageCount > 99 ? '99+' : unreadAdminMessageCount}
