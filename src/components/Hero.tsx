@@ -15,7 +15,7 @@ export const Hero: React.FC = () => {
   const clinicAddress = language === 'fil' ? siteContent.settings.clinicAddressFil : siteContent.settings.clinicAddress;
   const clinicHours = language === 'fil' ? siteContent.settings.clinicHoursFil : siteContent.settings.clinicHours;
   const clinicPhone = siteContent.settings.contactPhone;
-  const clinicPhones = clinicPhone.split(/\s+(?:and|or)\s+|\/|,/i).map((phone) => phone.trim()).filter(Boolean);
+  const clinicPhones = clinicPhone.split(/\s+(?:and|or)\s+|\/|,/i).map((phone) => phone.trim()).filter(Boolean).slice(0, 2);
   const bookingEnabled = appointmentRequestAvailability === 'available';
   const handleScrollTo = (id: string) => {
     setActiveSection(id);
@@ -72,7 +72,13 @@ export const Hero: React.FC = () => {
               <div className="mt-4 rounded-md bg-white px-3 py-1 text-[#0f4d3c]">
                 {clinicPhones.map((phone, index) => (
                   <React.Fragment key={phone}>
-                    {index > 0 && <p className="py-0.5 text-center text-xs font-medium text-slate-500">{language === 'fil' ? 'o' : 'or'}</p>}
+                    {index > 0 && (
+                      <div className="flex items-center gap-2 py-1 text-xs font-semibold text-slate-500">
+                        <span className="h-px flex-1 bg-slate-200" />
+                        {language === 'fil' ? 'o' : 'or'}
+                        <span className="h-px flex-1 bg-slate-200" />
+                      </div>
+                    )}
                     <a
                       href={`tel:${getPhoneLink(phone)}`}
                       aria-label={`${language === 'fil' ? 'Tumawag sa' : 'Call'} ${phone}`}
