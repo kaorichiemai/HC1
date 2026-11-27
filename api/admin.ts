@@ -202,7 +202,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
                 ON chat_read.appointment_id = appointment.id AND chat_read.user_uid = ?
               WHERE appointment.owner_uid = ?
                 AND appointment.chat_status != 'deleted'
-                AND message.sender_role = 'admin'
+                AND message.sender_role IN ('admin', 'assistant')
                 AND message.message NOT LIKE 'This is an automated reminder.%'
                 AND message.message NOT LIKE 'Reminder: Your appointment%'
                 AND (chat_read.read_at IS NULL OR message.created_at > chat_read.read_at)`,
@@ -262,7 +262,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       });
       if (appointment.rows.length === 0) return response.status(404).json({ error: 'Appointment conversation not found.' });
       const latestMessage = await db.execute({
-        sql: "SELECT MAX(created_at) AS latest_read_at FROM appointment_messages WHERE appointment_id = ? AND sender_role = 'admin'",
+        sql: "SELECT MAX(created_at) AS latest_read_at FROM appointment_messages WHERE appointment_id = ? AND sender_role IN ('admin', 'assistant')",
         args: [appointmentId],
       });
       const readAt = latestMessage.rows[0]?.latest_read_at;
