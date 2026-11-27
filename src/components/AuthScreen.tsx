@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SignIn, useSignUp } from '@clerk/react';
-import { X } from 'lucide-react';
+import { Eye, EyeOff, X } from 'lucide-react';
 import centerPhoto from '../assets/images/MR FLORES.png';
 
 const AuthField = ({
@@ -12,6 +12,7 @@ const AuthField = ({
   error,
   autoComplete,
   required = true,
+  reveal,
 }: {
   id: string;
   label: string;
@@ -21,23 +22,39 @@ const AuthField = ({
   error?: string;
   autoComplete?: string;
   required?: boolean;
+  reveal?: { isVisible: boolean; onToggle: () => void };
 }) => (
   <div>
     <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-zinc-800">
       {label}
     </label>
-    <input
-      id={id}
-      name={id}
-      type={type}
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      autoComplete={autoComplete}
-      required={required}
-      aria-invalid={Boolean(error)}
-      aria-describedby={error ? `${id}-error` : undefined}
-      className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
-    />
+    <div className="relative">
+      <input
+        id={id}
+        name={id}
+        type={reveal?.isVisible ? 'text' : type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        autoComplete={autoComplete}
+        required={required}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${id}-error` : undefined}
+        className={`w-full rounded-md border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100 ${
+          reveal ? 'pr-11' : ''
+        }`}
+      />
+      {reveal && (
+        <button
+          type="button"
+          onClick={reveal.onToggle}
+          aria-label={reveal.isVisible ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
+          aria-pressed={reveal.isVisible}
+          className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-zinc-500 hover:text-zinc-800"
+        >
+          {reveal.isVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      )}
+    </div>
     {error && (
       <p id={`${id}-error`} className="mt-1 text-sm text-rose-600">
         {error}
@@ -55,6 +72,8 @@ const CustomSignUpForm: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [requestError, setRequestError] = useState('');
   const passwordsMatch = password === confirmPassword;
   const isFetching = fetchStatus === 'fetching';
@@ -160,6 +179,7 @@ const CustomSignUpForm: React.FC = () => {
         onChange={setPassword}
         error={passwordError}
         autoComplete="new-password"
+        reveal={{ isVisible: passwordVisible, onToggle: () => setPasswordVisible((visible) => !visible) }}
       />
       <AuthField
         id="confirm-password"
@@ -169,7 +189,16 @@ const CustomSignUpForm: React.FC = () => {
         onChange={setConfirmPassword}
         error={confirmPasswordError}
         autoComplete="new-password"
+        reveal={{
+          isVisible: confirmPasswordVisible,
+          onToggle: () => setConfirmPasswordVisible((visible) => !visible),
+        }}
       />
+      {confirmPassword && passwordsMatch && (
+        <p role="status" className="text-sm text-emerald-700">
+          Passwords match.
+        </p>
+      )}
       {requestError && <p role="alert" className="text-sm text-rose-600">{requestError}</p>}
       <div id="clerk-captcha" />
       <button
