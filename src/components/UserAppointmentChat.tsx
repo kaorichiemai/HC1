@@ -159,7 +159,16 @@ export const UserAppointmentChat: React.FC = () => {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ appointmentId: selected.id, question }),
       });
-      const result = await response.json() as { error?: string };
+      const responseBody = await response.text();
+      let result: { error?: string } = {};
+      try {
+        result = JSON.parse(responseBody) as { error?: string };
+      } catch {
+        if (response.ok) throw new Error('The website assistant returned an invalid response. Please try again.');
+      }
+      if (!response.ok && !result.error) {
+        throw new Error(`The website assistant is temporarily unavailable (HTTP ${response.status}). Please try again.`);
+      }
       if (!response.ok) throw new Error(result.error || 'The website assistant could not respond.');
       setDraft('');
       await loadChat();

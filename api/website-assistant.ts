@@ -35,16 +35,24 @@ async function authenticate(request: ApiRequest) {
   }
 }
 
+function getBundledWebsiteContent() {
+  return {
+    services: SERVICES_DATA,
+    news: NEWS_UPDATES,
+    outreach: OUTREACH_PROGRAMS,
+    settings: DEFAULT_CLINIC_PUBLIC_SETTINGS,
+  };
+}
+
 async function getWebsiteContent() {
   const db = getContentDatabase();
-  return db
-    ? (await readSiteContent(db)).content
-    : {
-      services: SERVICES_DATA,
-      news: NEWS_UPDATES,
-      outreach: OUTREACH_PROGRAMS,
-      settings: DEFAULT_CLINIC_PUBLIC_SETTINGS,
-    };
+  if (!db) return getBundledWebsiteContent();
+  try {
+    return (await readSiteContent(db)).content;
+  } catch (error) {
+    console.error('Published website content could not be loaded; using bundled content:', error);
+    return getBundledWebsiteContent();
+  }
 }
 
 function formatWebsiteFacts(content: Awaited<ReturnType<typeof getWebsiteContent>>) {
@@ -100,7 +108,7 @@ async function askOpenRouter(question: string, facts: string) {
         { role: 'user', content: question },
       ],
     }),
-    signal: AbortSignal.timeout(15000),
+    signal: AbortSignal.timeout(8000),
   });
   if (!response.ok) {
     console.error(`OpenRouter assistant request failed with HTTP ${response.status}.`);
@@ -302,7 +310,12 @@ export default async function handler(request: ApiRequest, response: ApiResponse
   const decoded = await authenticate(request);
   if (!decoded) return response.status(401).json({ error: 'Sign in to use the website assistant.' });
   const db = getAppointmentDatabase();
-  if (!db) return response.status(503).json({ error: 'Appointment messaging is not configured.' });
+  if (!db) {
+    console.error('Website assistant is unavailable: TURSO_DATABASE_URL or TURSO_AUTH_TOKEN is missing.');
+    return response.status(503).json({
+      error: 'Appointment messaging is not configured. Set TURSO_DATABASE_URL and TURSO_AUTH_TOKEN for the Production deployment.',
+    });
+  }
   const body = request.body && typeof request.body === 'object'
     ? request.body as Record<string, unknown>
     : {};
