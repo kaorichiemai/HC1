@@ -58,7 +58,7 @@ export const OutreachBookingModal: React.FC = () => {
     siteContent,
   } = useHealthCenter();
   const services = siteContent.services;
-  const [serviceId, setServiceId] = useState('checkup');
+  const [serviceId, setServiceId] = useState('');
   const [patientName, setPatientName] = useState('');
   const [phone, setPhone] = useState('');
   const [age, setAge] = useState('');
@@ -86,6 +86,7 @@ export const OutreachBookingModal: React.FC = () => {
   const [pendingRequestLoaded, setPendingRequestLoaded] = useState(false);
   const [formStep, setFormStep] = useState<1 | 2>(1);
   const appointmentFormRef = useRef<HTMLFormElement>(null);
+  const hasPrefilledAppointmentDetails = useRef(false);
   const earliestDate = getEarliestAppointmentDate(now);
   const latestDate = getLatestAppointmentDate(now);
   const selectedService = services.find((service) => service.id === serviceId);
@@ -138,16 +139,10 @@ export const OutreachBookingModal: React.FC = () => {
   }, [dateBlocked, preferredDate, preferredTime, now, slotSettings, unavailableSlots, priorityCategories, age, serviceId, services]);
 
   useEffect(() => {
-    if (selectedProgramForBooking && services.some((service) => service.id === selectedProgramForBooking)) {
+    if (bookingModalOpen && selectedProgramForBooking && services.some((service) => service.id === selectedProgramForBooking)) {
       setServiceId(selectedProgramForBooking);
     }
-  }, [selectedProgramForBooking, services]);
-
-  useEffect(() => {
-    if (services.length > 0 && !services.some((service) => service.id === serviceId)) {
-      setServiceId(services[0].id);
-    }
-  }, [services, serviceId]);
+  }, [bookingModalOpen, selectedProgramForBooking, services]);
 
   useEffect(() => {
     const isMaternityService = services.find((service) => service.id === serviceId)?.category === 'maternity';
@@ -161,8 +156,10 @@ export const OutreachBookingModal: React.FC = () => {
 
   useEffect(() => {
     if (!bookingModalOpen) {
+      hasPrefilledAppointmentDetails.current = false;
       setReceipt(null);
       setError('');
+      setServiceId('');
       setPatientName('');
       setPhone('');
       setAge('');
@@ -173,6 +170,7 @@ export const OutreachBookingModal: React.FC = () => {
       setGuardianConsent(false);
       setChiefComplaint('');
       setPriorityCategories([]);
+      setZone('San Pedro');
       setPrivacyConsent(false);
       setAttendanceConsent(false);
       setArrivalConsent(false);
@@ -218,7 +216,22 @@ export const OutreachBookingModal: React.FC = () => {
         const result = await response.json() as {
           slotSettings?: PublicSlotSetting[];
           unavailableSlots?: UnavailableAppointmentSlot[];
-          appointments?: Array<{ reference_code: string; preferred_date: string; preferred_time: string; status: string }>;
+          appointments?: Array<{
+            reference_code: string;
+            preferred_date: string;
+            preferred_time: string;
+            status: string;
+            created_at: string;
+            patient_name: string;
+            phone: string;
+            address: string;
+            chief_complaint: string;
+            age: number;
+            guardian_name: string | null;
+            guardian_relationship: string | null;
+            priority_categories: string;
+            zone: string;
+          }>;
           error?: string;
         };
         if (!response.ok || !Array.isArray(result.slotSettings) || !Array.isArray(result.unavailableSlots)) {
@@ -234,6 +247,34 @@ export const OutreachBookingModal: React.FC = () => {
             preferredTime: activeAppointment.preferred_time,
             status: activeAppointment.status.toLowerCase() === 'confirmed' ? 'confirmed' : 'pending',
           } : null);
+          if (!hasPrefilledAppointmentDetails.current) {
+            const previousAppointment = [...(result.appointments ?? [])]
+              .sort((first, second) => second.created_at.localeCompare(first.created_at))[0];
+            if (previousAppointment) {
+              const comma = previousAppointment.address.indexOf(',');
+              const priorHouseNumber = comma < 0
+                ? previousAppointment.address.trim()
+                : previousAppointment.address.slice(0, comma).trim();
+              const priorStreetName = comma < 0
+                ? ''
+                : previousAppointment.address.slice(comma + 1).trim();
+              const priorPriorityCategories = previousAppointment.priority_categories
+                .split(',')
+                .filter((category) => ['pwd', 'pregnant_lactating'].includes(category));
+              setPatientName(previousAppointment.patient_name);
+              setPhone(normalizePhilippinePhoneNumber(previousAppointment.phone));
+              setAge(String(previousAppointment.age));
+              setHouseApartmentNumber(priorHouseNumber);
+              setStreetName(priorStreetName);
+              setGuardianName(previousAppointment.guardian_name ?? '');
+              setGuardianRelationship(previousAppointment.guardian_relationship ?? '');
+              setGuardianConsent(false);
+              setChiefComplaint(previousAppointment.chief_complaint);
+              setPriorityCategories(priorPriorityCategories);
+              setZone(previousAppointment.zone);
+            }
+            hasPrefilledAppointmentDetails.current = true;
+          }
           setPendingRequestLoaded(true);
           setAvailabilityError('');
         }
@@ -485,6 +526,7 @@ export const OutreachBookingModal: React.FC = () => {
               <div className="sm:col-span-2">
                 <label htmlFor="appointment-service" className="mb-1 block text-sm font-semibold text-slate-800">{isFilipino ? 'Serbisyo' : 'Service'}</label>
                 <select id="appointment-service" required value={serviceId} onChange={(event) => setServiceId(event.target.value)} className="min-h-12 w-full rounded-md border border-slate-300 bg-white px-3.5 py-2.5 text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-700">
+                  <option value="" disabled>{isFilipino ? 'Pumili ng serbisyo' : 'Choose a service'}</option>
                   {services.map((service) => <option key={service.id} value={service.id}>{isFilipino ? service.titleFil : service.title}</option>)}
                 </select>
                 {services.length === 0 && <p role="status" className="mt-2 text-xs text-amber-800">{isFilipino ? 'Walang kasalukuyang nailathalang serbisyo para sa appointment request.' : 'There are no published services available for appointment requests.'}</p>}
@@ -623,7 +665,7 @@ export const OutreachBookingModal: React.FC = () => {
                 </label>
               </div>
               <div className="sm:col-span-2">
-                <button type="button" disabled={!attendanceConsent || !arrivalConsent || (isMinor && (!guardianConsent || !guardianName.trim() || !guardianRelationship))} onClick={handleContinueToSchedule} className="mt-1 min-h-12 w-full rounded-sm bg-[#0f4d3c] px-4 py-3 text-base font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-60">
+                <button type="button" disabled={!selectedService || !attendanceConsent || !arrivalConsent || (isMinor && (!guardianConsent || !guardianName.trim() || !guardianRelationship))} onClick={handleContinueToSchedule} className="mt-1 min-h-12 w-full rounded-sm bg-[#0f4d3c] px-4 py-3 text-base font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-60">
                   {isFilipino ? 'Magpatuloy sa schedule' : 'Continue to schedule'}
                 </button>
               </div>

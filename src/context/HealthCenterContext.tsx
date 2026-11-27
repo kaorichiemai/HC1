@@ -109,6 +109,8 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const setBookingAvailabilityModal = (open: boolean) => {
     if (!open) {
       setBookingModalOpen(false);
+      setSelectedProgramForBooking(null);
+      sessionStorage.removeItem('mfhc_booking_program');
       return;
     }
     if (!isSignedIn) {
