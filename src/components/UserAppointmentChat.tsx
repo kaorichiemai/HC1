@@ -43,6 +43,7 @@ export const UserAppointmentChat: React.FC = () => {
   const { messagesOpen, setMessagesOpen, markAppointmentMessagesRead } = useHealthCenter();
   const [appointments, setAppointments] = useState<UserAppointment[]>([]);
   const [messages, setMessages] = useState<UserMessage[]>([]);
+  const [optimisticMessage, setOptimisticMessage] = useState<UserMessage | null>(null);
   const [selectedId, setSelectedId] = useState('');
   const [draft, setDraft] = useState('');
   const [error, setError] = useState('');
@@ -108,6 +109,11 @@ export const UserAppointmentChat: React.FC = () => {
 
   const selected = useMemo(() => appointments.find((appointment) => appointment.id === selectedId), [appointments, selectedId]);
   const selectedMessages = useMemo(() => messages.filter((message) => message.appointment_id === selectedId), [messages, selectedId]);
+  const visibleMessages = useMemo(() => {
+    if (!optimisticMessage || optimisticMessage.appointment_id !== selectedId
+      || selectedMessages.some((message) => message.id === optimisticMessage.id)) return selectedMessages;
+    return [...selectedMessages, optimisticMessage];
+  }, [optimisticMessage, selectedId, selectedMessages]);
   const latestSelectedMessageId = selectedMessages.at(-1)?.id;
 
   useEffect(() => {
@@ -126,13 +132,23 @@ export const UserAppointmentChat: React.FC = () => {
     setError('');
     setAssistantError('');
     setAssistantLoading(true);
+    const clientMessageId = crypto.randomUUID();
+    setOptimisticMessage({
+      id: clientMessageId,
+      appointment_id: selected.id,
+      sender_role: 'user',
+      sender_name: selected.patient_name,
+      message: question,
+      created_at: new Date().toISOString(),
+    });
+    setDraft('');
     try {
       const token = await getToken();
       if (!token) throw new Error('Sign in to ask the website assistant.');
       const response = await fetch('/api/website-assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ appointmentId: selected.id, question }),
+        body: JSON.stringify({ appointmentId: selected.id, question, clientMessageId }),
       });
       const responseBody = await response.text();
       let result: { error?: string } = {};
@@ -145,11 +161,12 @@ export const UserAppointmentChat: React.FC = () => {
         throw new Error(`The website assistant is temporarily unavailable (HTTP ${response.status}). Please try again.`);
       }
       if (!response.ok) throw new Error(result.error || 'The website assistant could not respond.');
-      setDraft('');
       await loadChat();
     } catch (caught) {
+      setDraft(question);
       setAssistantError(caught instanceof Error ? caught.message : 'The website assistant could not respond.');
     } finally {
+      setOptimisticMessage(null);
       setAssistantLoading(false);
     }
   };
@@ -176,7 +193,7 @@ export const UserAppointmentChat: React.FC = () => {
 
   return (
     <section role="dialog" aria-modal="true" aria-labelledby="messages-title" className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setMessagesOpen(false); }}>
-      <div className="flex h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-[#dfe6e1] bg-[#f8faf7] shadow-2xl sm:h-[min(500px,78dvh)] sm:max-h-[78dvh]">
+      <div className="flex h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-[#dfe6e1] bg-[#f8faf7] shadow-2xl sm:h-[min(460px,75dvh)] sm:max-h-[75dvh]">
         <header className="flex shrink-0 items-center justify-between border-b border-[#e8eeea] bg-white px-4 py-2 sm:px-5">
           <div><div className="text-[10px] font-bold text-[#17645c]">Your appointments</div><h2 id="messages-title" className="mt-0.5 text-base font-bold text-[#17312e]">Messages</h2></div>
           <button type="button" onClick={() => setMessagesOpen(false)} aria-label="Close messages" className="rounded-full p-2 text-[#66736f] transition-colors hover:bg-[#f1f4f1]"><X className="h-5 w-5" /></button>
@@ -199,8 +216,8 @@ export const UserAppointmentChat: React.FC = () => {
                 <div className="flex min-w-0 shrink-0 items-center gap-2 border-b border-[#e7ece9] bg-white px-3 py-2 sm:px-4"><button type="button" onClick={() => setSelectedId('')} className="shrink-0 rounded-full p-1 hover:bg-[#f1f4f1] lg:hidden" aria-label="Back to conversations"><ChevronLeft className="h-5 w-5 text-[#17645c]" /></button><MessageCircle className="h-4 w-4 shrink-0 text-[#17645c]" /><div className="min-w-0"><div className="truncate text-[13px] font-bold">{selected.service_name}</div><div className="text-[10px] text-[#66736f]">{selected.chat_status === 'closed' ? 'Chat closed by clinic staff' : 'Chat open'}</div></div></div>
                 {['pending', 'confirmed'].includes(selected.status) && <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[#e7ece9] bg-white px-3 py-2 sm:px-4"><p className="text-[10px] text-[#66736f]">Need to change your appointment? Contact the health center.</p><button type="button" onClick={() => void cancelSelectedAppointment()} className="min-h-8 rounded-md border border-rose-200 px-2.5 text-[11px] font-bold text-rose-700 transition-colors hover:bg-rose-50">Cancel appointment</button></div>}
                 <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto bg-[#f7f9f8] px-3 py-2.5 sm:px-4">
-                  {selectedMessages.map((message) => (
-                    <div key={message.id} className={`flex ${message.sender_role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[min(82%,28rem)] rounded-2xl px-2.5 py-1.5 text-[12px] leading-[1.4] ${message.sender_role === 'user' ? 'rounded-br-md bg-[#17645c] text-white' : 'rounded-bl-md border border-[#e8eeea] bg-white text-[#17312e]'}`}><div className="whitespace-pre-line break-words">{getDisplayMessage(message.message)}</div><div className={`mt-0.5 text-[9px] leading-3 ${message.sender_role === 'user' ? 'text-white/70' : 'text-[#87938c]'}`}>{message.sender_name}</div></div></div>
+                  {visibleMessages.map((message) => (
+                    <div key={message.id} className={`flex ${message.sender_role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[min(82%,28rem)] rounded-2xl px-2.5 py-1.5 text-[12px] leading-[1.4] ${message.sender_role === 'user' ? 'rounded-br-md bg-[#17645c] text-white' : 'rounded-bl-md border border-[#e8eeea] bg-white text-[#17312e]'}`}><div className="whitespace-pre-line break-words">{getDisplayMessage(message.message)}</div><div className={`mt-0.5 text-[9px] leading-3 ${message.sender_role === 'user' ? 'text-white/70' : 'text-[#87938c]'}`}>{message.id === optimisticMessage?.id ? 'Sending…' : message.sender_name}</div></div></div>
                   ))}
                   {assistantLoading && <p role="status" className="w-fit rounded-full border border-[#e8eeea] bg-white px-3 py-1.5 text-[11px] text-[#66736f]">Website assistant is replying…</p>}
                 </div>

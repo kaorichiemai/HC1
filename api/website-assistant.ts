@@ -121,7 +121,7 @@ ${facts}`,
         { role: 'user', content: question },
       ],
     }),
-    signal: AbortSignal.timeout(8000),
+    signal: AbortSignal.timeout(5000),
   });
   if (!response.ok) {
     console.error(`OpenRouter assistant request failed with HTTP ${response.status}.`);
@@ -176,7 +176,7 @@ const serviceKeywords: Record<string, string[]> = {
 function answerWebsiteQuestion(question: string, content: Awaited<ReturnType<typeof getWebsiteContent>>) {
   const normalizedQuestion = normalizeText(question);
   const isFilipino = hasAnyTerm(normalizedQuestion, [
-    'ano', 'saan', 'kailan', 'paano', 'magkano', 'serbisyo', 'bukas', 'oras', 'kailangan', 'pwede', 'maaari', 'po', 'ba',
+    'ano', 'saan', 'san', 'kailan', 'paano', 'magkano', 'serbisyo', 'bukas', 'oras', 'kailangan', 'pwede', 'maaari', 'po', 'ba', 'mga', 'makikita', 'ninyo', 'nyo',
   ]);
   const contact = `Contact: ${content.settings.contactPhone}${content.settings.contactEmail ? ` · ${content.settings.contactEmail}` : ''}`;
 
@@ -334,6 +334,10 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     : {};
   const appointmentId = typeof body.appointmentId === 'string' ? body.appointmentId.trim().slice(0, 128) : '';
   const question = typeof body.question === 'string' ? body.question.trim() : '';
+  const clientMessageId = typeof body.clientMessageId === 'string'
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.clientMessageId)
+    ? body.clientMessageId
+    : '';
   if (!appointmentId || question.length === 0 || question.length > 1200) {
     return response.status(400).json({ error: 'Enter a message about the health center website.' });
   }
@@ -353,12 +357,16 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     const content = await getWebsiteContent();
     const fallbackAnswer = answerWebsiteQuestion(question, content);
     let answerMessage = fallbackAnswer;
-    try {
-      answerMessage = await askOpenRouter(question, formatWebsiteFacts(content)) ?? fallbackAnswer;
-    } catch (error) {
-      console.error('OpenRouter assistant request failed; using the local website responder:', error);
+    const needsOpenRouter = fallbackAnswer.startsWith("I couldn't find a confirmed answer")
+      || fallbackAnswer.startsWith('Wala akong kumpirmadong sagot');
+    if (needsOpenRouter) {
+      try {
+        answerMessage = await askOpenRouter(question, formatWebsiteFacts(content)) ?? fallbackAnswer;
+      } catch (error) {
+        console.error('OpenRouter assistant request failed; using the local website responder:', error);
+      }
     }
-    const userMessageId = randomUUID();
+    const userMessageId = clientMessageId || randomUUID();
     const assistantMessageId = randomUUID();
     const createdAt = new Date();
     const transaction = await db.transaction('write');
