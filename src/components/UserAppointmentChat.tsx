@@ -176,13 +176,13 @@ export const UserAppointmentChat: React.FC = () => {
 
   return (
     <section role="dialog" aria-modal="true" aria-labelledby="messages-title" className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setMessagesOpen(false); }}>
-      <div className="flex h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-4xl flex-col overflow-hidden rounded-xl border border-[#dfe6e1] bg-[#f8faf7] shadow-2xl sm:h-[min(680px,92dvh)] sm:max-h-[92dvh]">
-        <header className="flex shrink-0 items-center justify-between border-b border-[#dfe6e1] bg-white px-4 py-2.5 sm:px-5">
-          <div><div className="text-[11px] font-bold text-[#17645c]">Your appointments</div><h2 id="messages-title" className="mt-0.5 text-lg font-bold text-[#17312e]">Messages</h2></div>
+      <div className="flex h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[#dfe6e1] bg-[#f8faf7] shadow-2xl sm:h-[min(560px,84dvh)] sm:max-h-[84dvh]">
+        <header className="flex shrink-0 items-center justify-between border-b border-[#e8eeea] bg-white px-4 py-2 sm:px-5">
+          <div><div className="text-[10px] font-bold text-[#17645c]">Your appointments</div><h2 id="messages-title" className="mt-0.5 text-base font-bold text-[#17312e]">Messages</h2></div>
           <button type="button" onClick={() => setMessagesOpen(false)} aria-label="Close messages" className="rounded-full p-2 text-[#66736f] transition-colors hover:bg-[#f1f4f1]"><X className="h-5 w-5" /></button>
         </header>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="grid min-h-0 flex-1 overflow-hidden bg-white lg:grid-cols-[260px_minmax(0,1fr)]">
+        <div className="grid min-h-0 flex-1 overflow-hidden bg-white lg:grid-cols-[220px_minmax(0,1fr)]">
           <aside className={`${selected ? 'hidden lg:block' : 'block'} min-h-0 overflow-y-auto border-b border-[#dfe6e1] lg:border-b-0 lg:border-r`}>
             {appointments.map((appointment) => (
               <button key={appointment.id} type="button" onClick={() => { setAssistantError(''); setSelectedId(appointment.id); }} className={`w-full border-b border-[#edf1ee] px-3 py-3 text-left transition-colors hover:bg-[#f4f7f4] ${selectedId === appointment.id ? 'bg-[#edf3ef]' : ''}`}>
@@ -196,21 +196,21 @@ export const UserAppointmentChat: React.FC = () => {
           <div className={`${selected ? 'block' : 'hidden'} min-h-0 min-w-0 lg:block`}>
             {!selected ? <div className="flex h-full min-h-[280px] items-center justify-center text-sm text-[#66736f]">Select a conversation</div> : (
               <div className="flex h-full min-h-0 flex-col">
-                <div className="flex min-w-0 shrink-0 items-center gap-2 border-b border-[#e7ece9] bg-white px-3 py-2.5 sm:px-4"><button type="button" onClick={() => setSelectedId('')} className="shrink-0 rounded-full p-1 hover:bg-[#f1f4f1] lg:hidden" aria-label="Back to conversations"><ChevronLeft className="h-5 w-5 text-[#17645c]" /></button><MessageCircle className="h-4 w-4 shrink-0 text-[#17645c]" /><div className="min-w-0"><div className="truncate text-sm font-bold">{selected.service_name}</div><div className="text-[10px] text-[#66736f]">{selected.chat_status === 'closed' ? 'Chat closed by clinic staff' : 'Chat open'}</div></div></div>
+                <div className="flex min-w-0 shrink-0 items-center gap-2 border-b border-[#e7ece9] bg-white px-3 py-2 sm:px-4"><button type="button" onClick={() => setSelectedId('')} className="shrink-0 rounded-full p-1 hover:bg-[#f1f4f1] lg:hidden" aria-label="Back to conversations"><ChevronLeft className="h-5 w-5 text-[#17645c]" /></button><MessageCircle className="h-4 w-4 shrink-0 text-[#17645c]" /><div className="min-w-0"><div className="truncate text-[13px] font-bold">{selected.service_name}</div><div className="text-[10px] text-[#66736f]">{selected.chat_status === 'closed' ? 'Chat closed by clinic staff' : 'Chat open'}</div></div></div>
                 {['pending', 'confirmed'].includes(selected.status) && <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[#e7ece9] bg-white px-3 py-2 sm:px-4"><p className="text-[10px] text-[#66736f]">Need to change your appointment? Contact the health center.</p><button type="button" onClick={() => void cancelSelectedAppointment()} className="min-h-8 rounded-md border border-rose-200 px-2.5 text-[11px] font-bold text-rose-700 transition-colors hover:bg-rose-50">Cancel appointment</button></div>}
-                <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto bg-[#f7f9f8] px-3 py-3 sm:px-4">
+                <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto bg-[#f7f9f8] px-3 py-2.5 sm:px-4">
                   {selectedMessages.map((message) => (
-                    <div key={message.id} className={`flex ${message.sender_role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[min(86%,34rem)] rounded-2xl px-3 py-2 text-[13px] leading-[1.4] shadow-sm ${message.sender_role === 'user' ? 'rounded-br-md bg-[#17645c] text-white' : 'rounded-bl-md border border-[#e8eeea] bg-white text-[#17312e]'}`}><div className="whitespace-pre-line break-words">{getDisplayMessage(message.message)}</div><div className={`mt-1 text-[9px] leading-3 ${message.sender_role === 'user' ? 'text-white/70' : 'text-[#87938c]'}`}>{message.sender_name}</div></div></div>
+                    <div key={message.id} className={`flex ${message.sender_role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[min(82%,28rem)] rounded-2xl px-2.5 py-1.5 text-[12px] leading-[1.4] ${message.sender_role === 'user' ? 'rounded-br-md bg-[#17645c] text-white' : 'rounded-bl-md border border-[#e8eeea] bg-white text-[#17312e]'}`}><div className="whitespace-pre-line break-words">{getDisplayMessage(message.message)}</div><div className={`mt-0.5 text-[9px] leading-3 ${message.sender_role === 'user' ? 'text-white/70' : 'text-[#87938c]'}`}>{message.sender_name}</div></div></div>
                   ))}
                   {assistantLoading && <p role="status" className="w-fit rounded-full border border-[#e8eeea] bg-white px-3 py-1.5 text-[11px] text-[#66736f]">Website assistant is replying…</p>}
                 </div>
                 {selected.chat_status === 'open' ? (
-                  <div className="shrink-0 border-t border-[#e7ece9] bg-white px-3 py-2 sm:px-4">
+                  <div className="shrink-0 border-t border-[#e7ece9] bg-white px-3 py-1.5 sm:px-4">
                     {assistantError && <p role="alert" className="mb-2 text-xs text-rose-800">{assistantError}</p>}
-                    <p className="mb-1.5 text-[10px] leading-4 text-[#87938c]">Got your message! Thanks for reaching out. Our Pateros HealthConnect assistant will reply any minute with information based on published health center listings.</p>
+                    <p className="mb-1 text-[9px] leading-3 text-[#87938c]">Got your message! Thanks for reaching out. Our Pateros HealthConnect assistant will reply any minute with information based on published health center listings.</p>
                     <form onSubmit={sendAssistantMessage} className="flex items-center gap-2">
-                      <input value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={1200} placeholder="Ask about the health center website" className="h-10 min-w-0 flex-1 rounded-full border border-[#d8e0db] bg-[#f7f9f8] px-4 text-[13px] outline-none transition-colors placeholder:text-[#9aa59f] focus:border-[#17645c] focus:bg-white" />
-                      <button type="submit" disabled={!draft.trim() || assistantLoading} aria-label="Send question to website assistant" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#17645c] text-white transition-colors hover:bg-[#124f49] disabled:cursor-not-allowed disabled:opacity-50"><Send className="h-4 w-4" /></button>
+                      <input value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={1200} placeholder="Ask about the health center website" className="h-9 min-w-0 flex-1 rounded-full border border-[#d8e0db] bg-[#f7f9f8] px-3.5 text-xs outline-none transition-colors placeholder:text-[#9aa59f] focus:border-[#17645c] focus:bg-white" />
+                      <button type="submit" disabled={!draft.trim() || assistantLoading} aria-label="Send question to website assistant" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#17645c] text-white transition-colors hover:bg-[#124f49] disabled:cursor-not-allowed disabled:opacity-50"><Send className="h-3.5 w-3.5" /></button>
                     </form>
                   </div>
                 ) : <div className="shrink-0 border-t border-[#e7ece9] bg-white px-4 py-3 text-center text-xs font-semibold text-[#66736f]">This chat has been closed by clinic staff</div>}
