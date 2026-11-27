@@ -11,6 +11,7 @@ const AuthField = ({
   onChange,
   error,
   autoComplete,
+  required = true,
 }: {
   id: string;
   label: string;
@@ -19,6 +20,7 @@ const AuthField = ({
   onChange: (value: string) => void;
   error?: string;
   autoComplete?: string;
+  required?: boolean;
 }) => (
   <div>
     <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-zinc-800">
@@ -31,7 +33,7 @@ const AuthField = ({
       value={value}
       onChange={(event) => onChange(event.target.value)}
       autoComplete={autoComplete}
-      required
+      required={required}
       aria-invalid={Boolean(error)}
       aria-describedby={error ? `${id}-error` : undefined}
       className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
@@ -46,11 +48,13 @@ const AuthField = ({
 
 const CustomSignUpForm: React.FC = () => {
   const { signUp, errors, fetchStatus } = useSignUp();
-  const [emailAddress, setEmailAddress] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [surname, setSurname] = useState('');
+  const [suffix, setSuffix] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
-  const [verificationSent, setVerificationSent] = useState(false);
   const [requestError, setRequestError] = useState('');
   const passwordsMatch = password === confirmPassword;
   const isFetching = fetchStatus === 'fetching';
@@ -61,33 +65,25 @@ const CustomSignUpForm: React.FC = () => {
 
     if (!passwordsMatch) return;
 
-    const { error } = await signUp.password({ emailAddress, password });
-    if (error) {
-      setRequestError(error.message);
-      return;
-    }
-
-    const verification = await signUp.verifications.sendEmailCode();
-    if (verification.error) {
-      setRequestError(verification.error.message);
-      return;
-    }
-
-    setVerificationSent(true);
-  };
-
-  const handleVerify = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setRequestError('');
-
-    const { error } = await signUp.verifications.verifyEmailCode({ code: verificationCode });
+    const { error } = await signUp.password({
+      username,
+      password,
+      firstName,
+      lastName: surname,
+      unsafeMetadata: {
+        middleName,
+        ...(suffix.trim() ? { suffix: suffix.trim() } : {}),
+      },
+    });
     if (error) {
       setRequestError(error.message);
       return;
     }
 
     if (signUp.status !== 'complete') {
-      setRequestError('Your sign-up could not be completed. Please check your account details and try again.');
+      setRequestError(
+        'Clerk requires additional signup fields or verification. Enable username signup and disable required email verification in Clerk settings.',
+      );
       return;
     }
 
@@ -95,63 +91,52 @@ const CustomSignUpForm: React.FC = () => {
     if (finalization.error) setRequestError(finalization.error.message);
   };
 
-  const emailError = errors.fields.emailAddress?.message;
+  const usernameError = errors.fields.username?.message;
   const passwordError = errors.fields.password?.message;
-  const codeError = errors.fields.code?.message;
   const confirmPasswordError =
     confirmPassword.length > 0 && !passwordsMatch ? 'Passwords do not match.' : undefined;
 
-  return verificationSent ? (
-    <form onSubmit={handleVerify} className="space-y-4">
-      <div className="mb-5 text-center">
-        <h2 className="text-xl font-semibold text-zinc-900">Verify your email</h2>
-        <p className="mt-1 text-sm text-zinc-600">
-          Enter the verification code sent to {emailAddress}.
-        </p>
-      </div>
-      <AuthField
-        id="verification-code"
-        label="Verification code"
-        value={verificationCode}
-        onChange={setVerificationCode}
-        error={codeError}
-        autoComplete="one-time-code"
-      />
-      {requestError && <p role="alert" className="text-sm text-rose-600">{requestError}</p>}
-      <button
-        type="submit"
-        disabled={isFetching}
-        className="w-full rounded-md bg-[#8b00ff] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#7600db] disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isFetching ? 'Verifying...' : 'Verify email'}
-      </button>
-      <button
-        type="button"
-        disabled={isFetching}
-        onClick={async () => {
-          setRequestError('');
-          const { error } = await signUp.verifications.sendEmailCode();
-          if (error) setRequestError(error.message);
-        }}
-        className="w-full text-sm font-medium text-purple-700 hover:text-purple-800 disabled:opacity-60"
-      >
-        Resend code
-      </button>
-    </form>
-  ) : (
+  return (
     <form onSubmit={handleSignUp} className="space-y-4">
       <div className="mb-5 text-center">
         <h2 className="text-xl font-semibold text-zinc-900">Create an account</h2>
         <p className="mt-1 text-sm text-zinc-600">Sign up to access your health center account.</p>
       </div>
       <AuthField
-        id="email-address"
-        label="Email address"
-        type="email"
-        value={emailAddress}
-        onChange={setEmailAddress}
-        error={emailError}
-        autoComplete="email"
+        id="first-name"
+        label="First name"
+        value={firstName}
+        onChange={setFirstName}
+        autoComplete="given-name"
+      />
+      <AuthField
+        id="middle-name"
+        label="Middle name"
+        value={middleName}
+        onChange={setMiddleName}
+        autoComplete="additional-name"
+      />
+      <AuthField
+        id="surname"
+        label="Surname"
+        value={surname}
+        onChange={setSurname}
+        autoComplete="family-name"
+      />
+      <AuthField
+        id="suffix"
+        label="Suffix (optional)"
+        value={suffix}
+        onChange={setSuffix}
+        required={false}
+      />
+      <AuthField
+        id="username"
+        label="Username"
+        value={username}
+        onChange={setUsername}
+        error={usernameError}
+        autoComplete="username"
       />
       <AuthField
         id="password"
