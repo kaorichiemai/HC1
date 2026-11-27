@@ -97,6 +97,9 @@ function appointmentsApiDevPlugin(): Plugin {
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss(), appointmentsApiDevPlugin()],
+    build: {
+      sourcemap: false,
+    },
     define: {
       'import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY': JSON.stringify(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY || ''),
     },
