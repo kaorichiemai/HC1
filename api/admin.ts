@@ -61,7 +61,8 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
       status TEXT NOT NULL DEFAULT 'pending',
       chat_status TEXT NOT NULL DEFAULT 'closed',
       created_at TEXT NOT NULL,
-      completed_at TEXT
+      completed_at TEXT,
+      missed_at TEXT
     )`,
     `CREATE TABLE IF NOT EXISTS appointment_messages (
       id TEXT PRIMARY KEY,
@@ -102,6 +103,9 @@ async function initializeAdminDatabase(db: ReturnType<typeof createClient>) {
   }
   if (!columnNames.has('completed_at')) {
     await db.execute('ALTER TABLE appointment_requests ADD COLUMN completed_at TEXT');
+  }
+  if (!columnNames.has('missed_at')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN missed_at TEXT');
   }
   if (!columnNames.has('address')) {
     await db.execute('ALTER TABLE appointment_requests ADD COLUMN address TEXT');
@@ -493,6 +497,47 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       return response.status(200).json({ appointmentId, archived: true });
     }
 
+    if (action === 'missed') {
+      if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
+      if (!appointmentId && !referenceCode) return response.status(400).json({ error: 'Appointment is required.' });
+      const transaction = await db.transaction('write');
+      try {
+        const now = new Date().toISOString();
+        const result = await transaction.execute({
+          sql: `UPDATE appointment_requests
+                SET status = 'missed', missed_at = ?,
+                    chat_status = CASE WHEN chat_status = 'deleted' THEN 'deleted' ELSE 'closed' END
+                WHERE ${appointmentId ? 'id = ?' : 'reference_code = ?'} AND status = 'confirmed'`,
+          args: [now, appointmentId || referenceCode],
+        });
+        if (result.rowsAffected === 0) {
+          await transaction.rollback();
+          const target = appointmentId
+            ? await db.execute({ sql: 'SELECT status FROM appointment_requests WHERE id = ?', args: [appointmentId] })
+            : await db.execute({ sql: 'SELECT status FROM appointment_requests WHERE reference_code = ?', args: [referenceCode] });
+          if (target.rows.length === 0) return response.status(404).json({ error: 'Appointment not found.' });
+          return response.status(409).json({ error: 'Only accepted appointments can be marked as missed.' });
+        }
+        await transaction.execute({
+          sql: `INSERT INTO appointment_messages
+                (id, appointment_id, sender_uid, sender_role, sender_name, message, created_at)
+                SELECT ?, id, 'clinic-system', 'admin', 'Health Center', ?, ?
+                FROM appointment_requests WHERE ${appointmentId ? 'id = ?' : 'reference_code = ?'} LIMIT 1`,
+          args: [
+            randomUUID(),
+            'Your appointment was marked as missed because you did not attend at the scheduled time. This appointment is now closed, and you may submit a new appointment request.\n\nNamarkahang hindi nadaluhan ang iyong appointment at isinara na ang booking na ito. Maaari ka nang magsumite ng bagong appointment request.',
+            now,
+            appointmentId || referenceCode,
+          ],
+        });
+        await transaction.commit();
+        return response.status(200).json({ appointmentId, referenceCode, status: 'missed' });
+      } catch (error) {
+        await transaction.rollback();
+        throw error;
+      }
+    }
+
     if (action === 'approve' || action === 'cancel' || action === 'complete') {
       if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
       if (!appointmentId && !referenceCode) return response.status(400).json({ error: 'Appointment is required.' });
@@ -583,10 +628,13 @@ export default async function handler(request: ApiRequest, response: ApiResponse
     if (action === 'chat_open' || action === 'chat_close') {
       if (!admin) return response.status(403).json({ error: 'Admin permission is required.' });
       if (!appointmentId) return response.status(400).json({ error: 'Appointment is required.' });
-      const existing = await db.execute({ sql: 'SELECT chat_status FROM appointment_requests WHERE id = ?', args: [appointmentId] });
+      const existing = await db.execute({ sql: 'SELECT status, chat_status FROM appointment_requests WHERE id = ?', args: [appointmentId] });
       if (existing.rows.length === 0) return response.status(404).json({ error: 'Appointment not found.' });
       if (String(existing.rows[0].chat_status) === 'deleted') {
         return response.status(409).json({ error: 'This conversation has been deleted.' });
+      }
+      if (action === 'chat_open' && ['completed', 'missed'].includes(String(existing.rows[0].status))) {
+        return response.status(409).json({ error: 'This appointment conversation is closed.' });
       }
       const chatStatus = action === 'chat_open' ? 'open' : 'closed';
       await db.execute({ sql: 'UPDATE appointment_requests SET chat_status = ? WHERE id = ?', args: [chatStatus, appointmentId] });
@@ -600,6 +648,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       if (appointment.rows.length === 0) return response.status(404).json({ error: 'Appointment not found.' });
       const row = appointment.rows[0];
       if (String(row.chat_status) === 'deleted') return response.status(410).json({ error: 'This conversation has been deleted.' });
+      if (String(row.status) === 'missed') return response.status(409).json({ error: 'This appointment conversation is closed.' });
       if (!admin && String(row.owner_uid) !== decoded.sub) return response.status(403).json({ error: 'You cannot access this chat.' });
       if (!admin && String(row.chat_status) === 'closed') return response.status(403).json({ error: 'This chat has been closed by the admin.' });
       const id = randomUUID();

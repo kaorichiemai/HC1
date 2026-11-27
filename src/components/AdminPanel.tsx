@@ -1,6 +1,6 @@
 import React, { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@clerk/react';
-import { CalendarDays, Check, CheckCircle2, ChevronLeft, Clock3, LockKeyhole, MessageCircle, Search, Send, Trash2 } from 'lucide-react';
+import { AlertCircle, CalendarDays, Check, CheckCircle2, ChevronLeft, Clock3, LockKeyhole, MessageCircle, Search, Send, Trash2 } from 'lucide-react';
 import { AdminCalendar, SlotSetting, SlotSettingsForm } from './AdminCalendar';
 import { AdminContentManager } from './AdminContentManager';
 import { formatAppointmentTime, getAppointmentTimeMinutes } from '../appointmentSchedule';
@@ -28,6 +28,7 @@ interface AppointmentRow {
   chat_status: string;
   created_at: string;
   completed_at: string | null;
+  missed_at: string | null;
 }
 
 interface ChatMessage {
@@ -82,7 +83,7 @@ export const AdminPanel: React.FC = () => {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [slotSettings, setSlotSettings] = useState<SlotSetting[]>([]);
-  const [activeTab, setActiveTab] = useState<'requests' | 'priority' | 'completed' | 'calendar' | 'content'>('requests');
+  const [activeTab, setActiveTab] = useState<'requests' | 'priority' | 'completed' | 'missed' | 'calendar' | 'content'>('requests');
   const [selectedId, setSelectedId] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [appointmentDateFilter, setAppointmentDateFilter] = useState('');
@@ -132,14 +133,17 @@ export const AdminPanel: React.FC = () => {
     pending: appointments.filter((appointment) => appointment.status === 'pending').length,
     confirmed: appointments.filter((appointment) => appointment.status === 'confirmed').length,
     completed: appointments.filter((appointment) => appointment.status === 'completed').length,
+    missed: appointments.filter((appointment) => appointment.status === 'missed').length,
   }), [appointments]);
   const filteredAppointments = useMemo(() => {
     const query = search.trim().toLowerCase();
     return appointments.filter((appointment) => {
       const inSelectedSection = activeTab === 'completed'
         ? appointment.status === 'completed'
-        : appointment.status !== 'completed';
-      const matchesStatus = activeTab === 'completed'
+        : activeTab === 'missed'
+          ? appointment.status === 'missed'
+          : appointment.status !== 'completed' && appointment.status !== 'missed';
+      const matchesStatus = activeTab === 'completed' || activeTab === 'missed'
         || statusFilter === 'all'
         || (statusFilter === 'history' ? appointment.status === 'cancelled' : appointment.status === statusFilter);
       const matchesDate = !appointmentDateFilter || appointment.preferred_date === appointmentDateFilter;
@@ -165,6 +169,7 @@ export const AdminPanel: React.FC = () => {
   const performAction = async (action: string, appointment: AppointmentRow) => {
     if (action === 'delete_chat' && !window.confirm('Archive this conversation for the patient? Messages will remain available in admin records, and the appointment request will be kept.')) return;
     if (action === 'complete' && !window.confirm('Mark this appointment as completed? The patient chat will close, and the request will move to Completed appointments.')) return;
+    if (action === 'missed' && !window.confirm('Mark this appointment as missed? The appointment and patient chat will close, and the patient will be notified that they can request a new appointment.')) return;
     try {
       const token = await getToken();
       if (!token) throw new Error("Sign in to continue.");
@@ -183,6 +188,7 @@ export const AdminPanel: React.FC = () => {
         setChatInput('');
       }
       if (action === 'complete') setActiveTab('completed');
+      if (action === 'missed') setActiveTab('missed');
       await loadWorkspace();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'The action could not be completed.');
@@ -260,12 +266,13 @@ export const AdminPanel: React.FC = () => {
         <nav aria-label="Admin sections" className="mb-5 flex gap-1 overflow-x-auto rounded-md border border-[#dce7e1] bg-white p-1 shadow-sm">
           {[
             { id: 'requests', label: 'Appointment requests' },
-            { id: 'priority', label: `Priority appointments (${appointments.filter((appointment) => appointment.status !== 'completed' && getPriorityCategoryLabels(appointment.priority_categories ?? '').length > 0).length})` },
+            { id: 'priority', label: `Priority appointments (${appointments.filter((appointment) => !['completed', 'missed'].includes(appointment.status) && getPriorityCategoryLabels(appointment.priority_categories ?? '').length > 0).length})` },
             { id: 'completed', label: `Completed appointments (${counts.completed})` },
+            { id: 'missed', label: `Missed appointments (${counts.missed})` },
             { id: 'calendar', label: 'Calendar & availability' },
             { id: 'content', label: 'Website content' },
           ].map(({ id, label }) => (
-            <button key={id} type="button" onClick={() => { setActiveTab(id as 'requests' | 'priority' | 'completed' | 'calendar' | 'content'); setSelectedId(''); }} className={`min-h-11 min-w-max flex-1 rounded-sm px-3 py-2.5 text-center text-xs font-bold sm:min-w-0 sm:px-4 sm:text-sm ${activeTab === id ? 'bg-[#0f4d3c] text-white' : 'text-[#66736f] hover:bg-[#f2f7f4] hover:text-[#0f4d3c]'}`}>{label}</button>
+            <button key={id} type="button" onClick={() => { setActiveTab(id as 'requests' | 'priority' | 'completed' | 'missed' | 'calendar' | 'content'); setSelectedId(''); }} className={`min-h-11 min-w-max flex-1 rounded-sm px-3 py-2.5 text-center text-xs font-bold sm:min-w-0 sm:px-4 sm:text-sm ${activeTab === id ? 'bg-[#0f4d3c] text-white' : 'text-[#66736f] hover:bg-[#f2f7f4] hover:text-[#0f4d3c]'}`}>{label}</button>
           ))}
         </nav>
 
@@ -283,7 +290,7 @@ export const AdminPanel: React.FC = () => {
         <section className="grid min-w-0 overflow-hidden rounded-md border border-[#dce7e1] bg-white shadow-sm lg:min-h-[640px] lg:grid-cols-[350px_minmax(0,1fr)]">
           <aside className={`${selected ? 'hidden lg:block' : ''} min-w-0 border-b border-[#dce7e1] lg:border-b-0 lg:border-r`}>
             <div className="border-b border-[#edf1ee] p-4">
-              <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-bold">{activeTab === 'priority' ? 'Priority appointments' : activeTab === 'completed' ? 'Completed appointment requests' : 'Appointment requests'}</h2><span className="text-xs text-[#66736f]">{displayedAppointments.length} shown</span></div>
+              <div className="mb-3 flex items-center justify-between"><h2 className="text-sm font-bold">{activeTab === 'priority' ? 'Priority appointments' : activeTab === 'completed' ? 'Completed appointment requests' : activeTab === 'missed' ? 'Missed appointments' : 'Appointment requests'}</h2><span className="text-xs text-[#66736f]">{displayedAppointments.length} shown</span></div>
               {activeTab === 'priority' && <p className="mb-3 text-xs leading-relaxed text-[#66736f]">Requests marked PWD, senior citizen, or pregnant/lactating are listed here for staff attention.</p>}
               {activeTab === 'completed' && (
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
@@ -291,6 +298,7 @@ export const AdminPanel: React.FC = () => {
                   <button type="button" onClick={() => exportCompletedAppointments(displayedAppointments)} disabled={displayedAppointments.length === 0} className="min-h-11 rounded-sm bg-[#0f4d3c] px-4 text-xs font-bold text-white hover:bg-[#2c7a5f] disabled:cursor-not-allowed disabled:opacity-50">Export completed records ({displayedAppointments.length})</button>
                 </div>
               )}
+              {activeTab === 'missed' && <p className="mb-3 text-xs leading-relaxed text-[#66736f]">Appointments marked as missed are closed and kept here for staff reference. Patients are notified that they may submit a new request.</p>}
               <label className="flex h-10 items-center gap-2 border border-[#d9e1dc] px-3 text-[#66736f] focus-within:border-[#17645c]">
                 <Search className="h-4 w-4 shrink-0" />
                 <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search patient or reference" className="min-w-0 flex-1 text-xs text-[#17312e] outline-none" />
@@ -300,7 +308,7 @@ export const AdminPanel: React.FC = () => {
                 <input type="date" value={appointmentDateFilter} onChange={(event) => setAppointmentDateFilter(event.target.value)} className="mt-1 block min-h-11 w-full border border-[#d9e1dc] bg-white px-3 text-sm text-[#17312e]" />
               </label>
               {appointmentDateFilter && <button type="button" onClick={() => setAppointmentDateFilter('')} className="mt-2 min-h-11 px-3 text-xs font-semibold text-[#17645c] hover:bg-[#eaf3ee]">Show all dates</button>}
-              {activeTab !== 'completed' && (
+              {activeTab !== 'completed' && activeTab !== 'missed' && (
                 <div className="mt-3 flex gap-1 overflow-x-auto pb-1">
                   {[
                     ['all', 'All'],
@@ -315,12 +323,12 @@ export const AdminPanel: React.FC = () => {
             <div className="max-h-[420px] overflow-y-auto lg:max-h-[calc(100vh-360px)]">
               {loading ? <p className="p-5 text-sm text-[#66736f]">Loading requests...</p> : displayedAppointments.map((appointment) => (
                 <button key={appointment.id} type="button" onClick={() => setSelectedId(appointment.id)} className={`w-full border-b border-[#edf1ee] border-l-2 px-4 py-4 text-left transition-colors hover:bg-[#f5f8f5] ${selectedId === appointment.id ? 'border-l-[#17645c] bg-[#f0f5f1]' : 'border-l-transparent'}`}>
-                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="truncate text-sm font-bold">{appointment.patient_name}</div><div className="mt-1 truncate text-xs text-[#66736f]">{appointment.service_name}</div></div><span className={`shrink-0 px-2 py-1 text-[10px] font-bold uppercase ${appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : appointment.status === 'completed' ? 'bg-sky-100 text-sky-800' : appointment.status === 'cancelled' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{appointment.status}</span></div>
+                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="truncate text-sm font-bold">{appointment.patient_name}</div><div className="mt-1 truncate text-xs text-[#66736f]">{appointment.service_name}</div></div><span className={`shrink-0 px-2 py-1 text-[10px] font-bold uppercase ${appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : appointment.status === 'completed' ? 'bg-sky-100 text-sky-800' : appointment.status === 'missed' || appointment.status === 'cancelled' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{appointment.status}</span></div>
                   <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px] text-[#66736f]"><span>{appointment.preferred_date} · {formatAppointmentTime(appointment.preferred_time)}</span><span className="break-all font-mono">{appointment.reference_code}</span></div>
                   {getPriorityCategoryLabels(appointment.priority_categories ?? '').length > 0 && <div className="mt-2 text-[10px] font-semibold text-[#17645c]">{getPriorityCategoryLabels(appointment.priority_categories ?? '').join(' · ')}</div>}
                 </button>
               ))}
-              {!loading && displayedAppointments.length === 0 && <p className="p-5 text-sm text-[#66736f]">{activeTab === 'priority' ? 'No priority appointments match these filters.' : activeTab === 'completed' ? 'No completed appointment requests yet.' : appointments.length ? 'No requests match these filters.' : 'No appointment requests yet.'}</p>}
+              {!loading && displayedAppointments.length === 0 && <p className="p-5 text-sm text-[#66736f]">{activeTab === 'priority' ? 'No priority appointments match these filters.' : activeTab === 'completed' ? 'No completed appointment requests yet.' : activeTab === 'missed' ? 'No missed appointments yet.' : appointments.length ? 'No requests match these filters.' : 'No appointment requests yet.'}</p>}
             </div>
           </aside>
 
@@ -335,7 +343,7 @@ export const AdminPanel: React.FC = () => {
               <div className="grid min-h-0 xl:min-h-[640px] xl:grid-cols-[minmax(230px,0.7fr)_minmax(320px,1.3fr)]">
                 <div className="min-w-0 border-b border-[#dfe6e1] bg-white p-4 sm:p-5 xl:border-b-0 xl:border-r">
                   <button type="button" onClick={() => setSelectedId('')} className="mb-4 flex items-center gap-1 text-xs font-bold text-[#17645c] lg:hidden"><ChevronLeft className="h-4 w-4" />Back to requests</button>
-                  <div className="flex items-start justify-between gap-3"><div><div className="text-[11px] font-bold uppercase tracking-wide text-[#17645c]">{selected.status === 'completed' || selected.status === 'cancelled' ? 'Appointment history' : 'Request details'}</div><div className="mt-1 font-mono text-xs text-[#66736f]">{selected.reference_code}</div></div><span className={`px-2 py-1 text-[10px] font-bold uppercase ${selected.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : selected.status === 'completed' ? 'bg-sky-100 text-sky-800' : selected.status === 'cancelled' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{selected.status}</span></div>
+                  <div className="flex items-start justify-between gap-3"><div><div className="text-[11px] font-bold uppercase tracking-wide text-[#17645c]">{['completed', 'missed', 'cancelled'].includes(selected.status) ? 'Appointment history' : 'Request details'}</div><div className="mt-1 font-mono text-xs text-[#66736f]">{selected.reference_code}</div></div><span className={`px-2 py-1 text-[10px] font-bold uppercase ${selected.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : selected.status === 'completed' ? 'bg-sky-100 text-sky-800' : selected.status === 'missed' || selected.status === 'cancelled' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{selected.status}</span></div>
                   <h2 className="mt-5 break-words text-xl font-bold">{selected.patient_name}</h2>
                   <p className="mt-1 break-words text-sm text-[#66736f]">{selected.service_name}</p>
                   <dl className="mt-6 space-y-4 border-y border-[#edf1ee] py-5 text-sm">
@@ -344,6 +352,7 @@ export const AdminPanel: React.FC = () => {
                     {selected.guardian_name && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Parent / guardian</dt><dd className="mt-1 font-medium">{selected.guardian_name}{selected.guardian_relationship ? ` (${selected.guardian_relationship})` : ''}</dd></div>}
                     {getPriorityCategoryLabels(selected.priority_categories ?? '').length > 0 && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Priority categories</dt><dd className="mt-1 font-medium">{getPriorityCategoryLabels(selected.priority_categories ?? '').join(', ')}</dd></div>}
                     {selected.completed_at && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Marked completed</dt><dd className="mt-1 font-medium">{new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(selected.completed_at))}</dd></div>}
+                    {selected.missed_at && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Marked missed</dt><dd className="mt-1 font-medium">{new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'short' }).format(new Date(selected.missed_at))}</dd></div>}
                     <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Barangay</dt><dd className="mt-1 font-medium">{selected.zone}</dd></div>
                     <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Contact number</dt><dd className="mt-1 font-medium">{selected.phone}</dd></div>
                     {selected.address && <div><dt className="text-[11px] font-bold uppercase tracking-wide text-[#87938c]">Address</dt><dd className="mt-1 break-words font-medium">{selected.address}</dd></div>}
@@ -351,14 +360,15 @@ export const AdminPanel: React.FC = () => {
                   </dl>
                   <div className="mt-5 grid gap-2">
                     {selected.status === 'confirmed' && <button type="button" onClick={() => void performAction('complete', selected)} className="flex min-h-11 items-center justify-center gap-2 border border-sky-200 px-2 text-sm font-bold text-sky-800 hover:bg-sky-50"><CheckCircle2 className="h-4 w-4 shrink-0" />Mark completed</button>}
-                    {selected.status !== 'completed' && selected.chat_status !== 'deleted' && <button type="button" onClick={() => void performAction(selected.chat_status === 'closed' ? 'chat_open' : 'chat_close', selected)} className="flex min-h-11 items-center justify-center gap-2 border border-[#d9e1dc] px-2 text-sm font-bold hover:bg-[#f4f6f3]"><LockKeyhole className="h-4 w-4 shrink-0" />{selected.chat_status === 'closed' ? 'Open patient chat' : 'Close patient chat'}</button>}
+                    {selected.status === 'confirmed' && <button type="button" onClick={() => void performAction('missed', selected)} className="flex min-h-11 items-center justify-center gap-2 border border-rose-200 px-2 text-sm font-bold text-rose-800 hover:bg-rose-50"><AlertCircle className="h-4 w-4 shrink-0" />Mark as missed appointment</button>}
+                    {!['completed', 'missed'].includes(selected.status) && selected.chat_status !== 'deleted' && <button type="button" onClick={() => void performAction(selected.chat_status === 'closed' ? 'chat_open' : 'chat_close', selected)} className="flex min-h-11 items-center justify-center gap-2 border border-[#d9e1dc] px-2 text-sm font-bold hover:bg-[#f4f6f3]"><LockKeyhole className="h-4 w-4 shrink-0" />{selected.chat_status === 'closed' ? 'Open patient chat' : 'Close patient chat'}</button>}
                   </div>
                 </div>
 
                 <div className="flex min-h-[380px] min-w-0 flex-col sm:min-h-[520px]">
                   <div className="flex min-w-0 items-center gap-2 border-b border-[#dfe6e1] bg-white px-3 py-3 sm:gap-3 sm:px-5 sm:py-4">
                     <div className="flex h-9 w-9 items-center justify-center bg-[#edf3ef] text-[#17645c]"><MessageCircle className="h-4 w-4" /></div>
-                    <div className="min-w-0"><h3 className="text-sm font-bold">Patient conversation</h3><p className="mt-0.5 text-[11px] text-[#66736f]">{selected.chat_status === 'deleted' ? 'Deleted for both accounts' : selected.status === 'completed' ? 'Chat closed for completed appointment' : selected.chat_status === 'closed' ? 'Open chat to send messages' : 'Chat is open with the patient'}</p></div>
+                    <div className="min-w-0"><h3 className="text-sm font-bold">Patient conversation</h3><p className="mt-0.5 text-[11px] text-[#66736f]">{selected.chat_status === 'deleted' ? 'Deleted for both accounts' : selected.status === 'completed' ? 'Chat closed for completed appointment' : selected.status === 'missed' ? 'Chat closed for missed appointment' : selected.chat_status === 'closed' ? 'Open chat to send messages' : 'Chat is open with the patient'}</p></div>
                     {selected.chat_status !== 'deleted' && <button type="button" onClick={() => void performAction('delete_chat', selected)} className="ml-auto inline-flex items-center gap-1.5 border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700 hover:bg-rose-50" title="Delete this chat for both accounts"><Trash2 className="h-4 w-4" /><span className="hidden sm:inline">Delete chat</span></button>}
                   </div>
                   <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-3 py-4 sm:px-5 sm:py-5">

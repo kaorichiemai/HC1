@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useState, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useState, useEffect, useRef } from 'react';
 import { useAuth } from '@clerk/react';
 import {
   Language,
@@ -91,6 +91,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [unreadMessagesError, setUnreadMessagesError] = useState('');
   const [selectedProgramForBooking, setSelectedProgramForBooking] = useState<string | null>(() => sessionStorage.getItem('mfhc_booking_program'));
   const [notificationToast, setNotificationToast] = useState<string | null>(null);
+  const previousAppointmentStatuses = useRef(new Map<string, string>());
 
   useEffect(() => {
     localStorage.setItem('mfhc_language', language);
@@ -144,7 +145,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
           cache: 'no-store',
         });
         const result = await response.json() as {
-          appointments?: Array<{ status: string }>;
+          appointments?: Array<{ status: string; reference_code: string }>;
           error?: string;
         };
         if (!response.ok || !Array.isArray(result.appointments)) {
@@ -152,6 +153,14 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
         if (active) {
           const statuses = result.appointments.map((appointment) => appointment.status.toLowerCase());
+          result.appointments.forEach((appointment) => {
+            const status = appointment.status.toLowerCase();
+            const previousStatus = previousAppointmentStatuses.current.get(appointment.reference_code);
+            if (previousStatus && previousStatus !== 'missed' && status === 'missed') {
+              setNotificationToast(`Appointment ${appointment.reference_code} was marked as missed. You can now submit a new appointment request.`);
+            }
+            previousAppointmentStatuses.current.set(appointment.reference_code, status);
+          });
           const availability = statuses.includes('pending')
             ? 'pending'
             : statuses.includes('confirmed') ? 'confirmed' : 'available';

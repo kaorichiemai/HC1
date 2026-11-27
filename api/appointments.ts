@@ -79,7 +79,8 @@ async function ensureAppointmentTable(db: ReturnType<typeof createClient>) {
       status TEXT NOT NULL DEFAULT 'pending',
       chat_status TEXT NOT NULL DEFAULT 'closed',
       created_at TEXT NOT NULL,
-      completed_at TEXT
+      completed_at TEXT,
+      missed_at TEXT
     )
   `);
   const columns = await db.execute('PRAGMA table_info(appointment_requests)');
@@ -92,6 +93,9 @@ async function ensureAppointmentTable(db: ReturnType<typeof createClient>) {
   }
   if (!columnNames.has('completed_at')) {
     await db.execute('ALTER TABLE appointment_requests ADD COLUMN completed_at TEXT');
+  }
+  if (!columnNames.has('missed_at')) {
+    await db.execute('ALTER TABLE appointment_requests ADD COLUMN missed_at TEXT');
   }
   if (!columnNames.has('address')) {
     await db.execute('ALTER TABLE appointment_requests ADD COLUMN address TEXT');
