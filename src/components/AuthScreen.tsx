@@ -123,13 +123,27 @@ const CustomSignUpForm: React.FC = () => {
         onChange={setSurname}
         autoComplete="family-name"
       />
-      <AuthField
-        id="suffix"
-        label="Suffix (optional)"
-        value={suffix}
-        onChange={setSuffix}
-        required={false}
-      />
+      <div>
+        <label htmlFor="suffix" className="mb-1.5 block text-sm font-medium text-zinc-800">
+          Suffix (optional)
+        </label>
+        <select
+          id="suffix"
+          name="suffix"
+          value={suffix}
+          onChange={(event) => setSuffix(event.target.value)}
+          className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-purple-600 focus:ring-2 focus:ring-purple-100"
+        >
+          <option value="">None</option>
+          <option value="Jr.">Jr.</option>
+          <option value="Sr.">Sr.</option>
+          <option value="I">I</option>
+          <option value="II">II</option>
+          <option value="III">III</option>
+          <option value="IV">IV</option>
+          <option value="V">V</option>
+        </select>
+      </div>
       <AuthField
         id="username"
         label="Username"
