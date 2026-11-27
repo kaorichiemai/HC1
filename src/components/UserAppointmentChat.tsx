@@ -44,6 +44,7 @@ export const UserAppointmentChat: React.FC = () => {
   const [draft, setDraft] = useState('');
   const [error, setError] = useState('');
   const [lastStatuses, setLastStatuses] = useState<Record<string, string>>({});
+  const [requestedReferenceCode, setRequestedReferenceCode] = useState('');
 
   const loadChat = async () => {
     try {
@@ -78,6 +79,27 @@ export const UserAppointmentChat: React.FC = () => {
     const timer = window.setInterval(() => void loadChat(), 3000);
     return () => window.clearInterval(timer);
   }, [messagesOpen]);
+
+  useEffect(() => {
+    const openAppointmentMessage = (event: Event) => {
+      const { referenceCode } = (event as CustomEvent<{ referenceCode?: unknown }>).detail ?? {};
+      if (typeof referenceCode !== 'string') return;
+      setRequestedReferenceCode(referenceCode);
+      setSelectedId('');
+      setMessagesOpen(true);
+    };
+
+    window.addEventListener('open-appointment-message', openAppointmentMessage);
+    return () => window.removeEventListener('open-appointment-message', openAppointmentMessage);
+  }, [setMessagesOpen]);
+
+  useEffect(() => {
+    if (!requestedReferenceCode) return;
+    const appointment = appointments.find((item) => item.reference_code === requestedReferenceCode);
+    if (!appointment) return;
+    setSelectedId(appointment.id);
+    setRequestedReferenceCode('');
+  }, [appointments, requestedReferenceCode]);
 
   const selected = useMemo(() => appointments.find((appointment) => appointment.id === selectedId), [appointments, selectedId]);
   const selectedMessages = useMemo(() => messages.filter((message) => message.appointment_id === selectedId), [messages, selectedId]);
@@ -135,7 +157,7 @@ export const UserAppointmentChat: React.FC = () => {
   };
 
   return (
-    <section role="dialog" aria-modal="true" aria-labelledby="messages-title" className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setMessagesOpen(false); }}>
+    <section role="dialog" aria-modal="true" aria-labelledby="messages-title" className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setMessagesOpen(false); }}>
       <div className="flex max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-5xl flex-col overflow-hidden border border-[#dfe6e1] bg-[#f8faf7] shadow-2xl sm:max-h-[92dvh]">
         <header className="flex shrink-0 items-center justify-between border-b border-[#dfe6e1] bg-white px-4 py-3 sm:px-5 sm:py-4">
           <div><div className="text-xs font-bold text-[#17645c]">Your appointments</div><h2 id="messages-title" className="mt-1 text-xl font-bold text-[#17312e]">Messages</h2></div>

@@ -388,6 +388,9 @@ export const OutreachBookingModal: React.FC = () => {
       });
       markAppointmentRequestStatus(result.status);
       setReceipt(result);
+      window.dispatchEvent(new CustomEvent('open-appointment-message', {
+        detail: { referenceCode: result.referenceCode },
+      }));
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Could not submit your appointment request.');
     } finally {
