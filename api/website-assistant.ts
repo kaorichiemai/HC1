@@ -6,6 +6,8 @@ import { verifyToken } from '@clerk/backend';
 import { DEFAULT_CLINIC_PUBLIC_SETTINGS, NEWS_UPDATES, OUTREACH_PROGRAMS, SERVICES_DATA } from '../src/data/healthCenterData.js';
 import { getContentDatabase, readSiteContent } from './site-content-store.js';
 
+const WEBSITE_ASSISTANT_ACKNOWLEDGMENT = 'Got your message! Thanks for reaching out. Our Pateros HealthConnect assistant will reply any minute with information based on published health center listings.';
+
 type ApiRequest = IncomingMessage & { body?: unknown; headers: IncomingMessage['headers'] & { authorization?: string } };
 type ApiResponse = ServerResponse & {
   status: (code: number) => ApiResponse;
@@ -367,6 +369,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       }
     }
     const userMessageId = clientMessageId || randomUUID();
+    const acknowledgmentMessageId = `${userMessageId}-ack`;
     const assistantMessageId = randomUUID();
     const createdAt = new Date();
     const transaction = await db.transaction('write');
@@ -390,7 +393,13 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         sql: `INSERT INTO appointment_messages
               (id, appointment_id, sender_uid, sender_role, sender_name, message, created_at)
               VALUES (?, ?, 'website-assistant', 'assistant', 'Website Assistant', ?, ?)`,
-        args: [assistantMessageId, appointmentId, answerMessage, new Date(createdAt.getTime() + 1).toISOString()],
+        args: [acknowledgmentMessageId, appointmentId, WEBSITE_ASSISTANT_ACKNOWLEDGMENT, new Date(createdAt.getTime() + 1).toISOString()],
+      });
+      await transaction.execute({
+        sql: `INSERT INTO appointment_messages
+              (id, appointment_id, sender_uid, sender_role, sender_name, message, created_at)
+              VALUES (?, ?, 'website-assistant', 'assistant', 'Website Assistant', ?, ?)`,
+        args: [assistantMessageId, appointmentId, answerMessage, new Date(createdAt.getTime() + 2).toISOString()],
       });
       await transaction.commit();
     } catch (error) {

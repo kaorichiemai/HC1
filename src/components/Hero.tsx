@@ -7,7 +7,7 @@ const getPhoneLink = (phone: string) => {
   const digits = phone.replace(/\D/g, '');
   if (digits.startsWith('0')) return `+63${digits.slice(1)}`;
   if (digits.startsWith('63')) return `+${digits}`;
-  return `+${digits}`;
+  return `+632${digits}`;
 };
 
 export const Hero: React.FC = () => {
@@ -15,6 +15,7 @@ export const Hero: React.FC = () => {
   const clinicAddress = language === 'fil' ? siteContent.settings.clinicAddressFil : siteContent.settings.clinicAddress;
   const clinicHours = language === 'fil' ? siteContent.settings.clinicHoursFil : siteContent.settings.clinicHours;
   const clinicPhone = siteContent.settings.contactPhone;
+  const clinicPhones = clinicPhone.split(/\s+and\s+|\/|,/i).map((phone) => phone.trim()).filter(Boolean);
   const bookingEnabled = appointmentRequestAvailability === 'available';
   const handleScrollTo = (id: string) => {
     setActiveSection(id);
@@ -68,13 +69,19 @@ export const Hero: React.FC = () => {
                   ? 'Tumawag sa aming kawani para matulungan ka sa pag-book ng appointment.'
                   : 'Call our staff and we can help you book an appointment.'}
               </p>
-              <a
-                href={`tel:${getPhoneLink(clinicPhone)}`}
-                className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md bg-white px-4 py-2 text-sm font-bold text-[#0f4d3c] transition-colors hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-              >
-                <PhoneCall className="h-4 w-4" aria-hidden="true" />
-                {language === 'fil' ? 'Tumawag sa' : 'Call'} {clinicPhone}
-              </a>
+              <div className="mt-4 rounded-md bg-white px-3 py-1 text-[#0f4d3c]">
+                {clinicPhones.map((phone) => (
+                  <a
+                    key={phone}
+                    href={`tel:${getPhoneLink(phone)}`}
+                    aria-label={`${language === 'fil' ? 'Tumawag sa' : 'Call'} ${phone}`}
+                    className="flex min-h-9 items-center justify-center gap-2 px-1 text-sm font-bold transition-colors hover:text-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800"
+                  >
+                    <PhoneCall className="h-4 w-4 shrink-0" aria-hidden="true" />
+                    {language === 'fil' ? 'Tumawag sa' : 'Call'} {phone}
+                  </a>
+                ))}
+              </div>
             </aside>
           </div>
         </div>

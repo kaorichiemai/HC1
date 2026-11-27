@@ -24,6 +24,8 @@ interface UserMessage {
   created_at: string;
 }
 
+const WEBSITE_ASSISTANT_ACKNOWLEDGMENT = 'Got your message! Thanks for reaching out. Our Pateros HealthConnect assistant will reply any minute with information based on published health center listings.';
+
 const isAutomatedReminder = (message: UserMessage) => message.sender_role === 'admin'
   && (message.message.startsWith('This is an automated reminder.')
     || message.message.startsWith('Reminder: Your appointment'));
@@ -111,10 +113,24 @@ export const UserAppointmentChat: React.FC = () => {
   const selected = useMemo(() => appointments.find((appointment) => appointment.id === selectedId), [appointments, selectedId]);
   const selectedMessages = useMemo(() => messages.filter((message) => message.appointment_id === selectedId), [messages, selectedId]);
   const visibleMessages = useMemo(() => {
-    if (!optimisticMessage || optimisticMessage.appointment_id !== selectedId
-      || selectedMessages.some((message) => message.id === optimisticMessage.id)) return selectedMessages;
-    return [...selectedMessages, optimisticMessage];
-  }, [optimisticMessage, selectedId, selectedMessages]);
+    let visible = selectedMessages;
+    const optimisticIsSelected = optimisticMessage?.appointment_id === selectedId;
+    if (optimisticIsSelected && !selectedMessages.some((message) => message.id === optimisticMessage.id)) {
+      visible = [...visible, optimisticMessage];
+    }
+    if (assistantLoading && optimisticIsSelected && selected
+      && !selectedMessages.some((message) => message.id === `${optimisticMessage.id}-ack`)) {
+      visible = [...visible, {
+        id: `${optimisticMessage.id}-ack`,
+        appointment_id: selectedId,
+        sender_role: 'assistant',
+        sender_name: 'Website Assistant',
+        message: WEBSITE_ASSISTANT_ACKNOWLEDGMENT,
+        created_at: new Date(new Date(optimisticMessage.created_at).getTime() + 1).toISOString(),
+      }];
+    }
+    return visible;
+  }, [assistantLoading, optimisticMessage, selected, selectedId, selectedMessages]);
   const latestSelectedMessageId = selectedMessages.at(-1)?.id;
 
   useEffect(() => {
@@ -232,7 +248,6 @@ export const UserAppointmentChat: React.FC = () => {
                   {visibleMessages.map((message) => (
                     <div key={message.id} className={`flex ${message.sender_role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[min(82%,28rem)] rounded-2xl px-2.5 py-1.5 text-[12px] leading-[1.4] ${message.sender_role === 'user' ? 'rounded-br-md bg-[#17645c] text-white' : 'rounded-bl-md border border-[#e8eeea] bg-white text-[#17312e]'}`}><div className="whitespace-pre-line break-words">{getDisplayMessage(message.message)}</div><div className={`mt-0.5 text-[9px] leading-3 ${message.sender_role === 'user' ? 'text-white/70' : 'text-[#87938c]'}`}>{message.id === optimisticMessage?.id ? 'Sending…' : message.sender_name}</div></div></div>
                   ))}
-                  {assistantLoading && <p role="status" className="w-fit rounded-full border border-[#e8eeea] bg-white px-3 py-1.5 text-[11px] text-[#66736f]">Website assistant is replying…</p>}
                 </div>
                 {selected.chat_status === 'open' ? (
                   <div className="shrink-0 border-t border-[#e7ece9] bg-white px-3 py-1.5 sm:px-4">
