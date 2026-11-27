@@ -176,7 +176,7 @@ export const UserAppointmentChat: React.FC = () => {
 
   return (
     <section role="dialog" aria-modal="true" aria-labelledby="messages-title" className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/50 p-2 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-6" onMouseDown={(event) => { if (event.target === event.currentTarget) setMessagesOpen(false); }}>
-      <div className="flex h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[#dfe6e1] bg-[#f8faf7] shadow-2xl sm:h-[min(560px,84dvh)] sm:max-h-[84dvh]">
+      <div className="flex h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] max-h-[calc(100dvh-1rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-[#dfe6e1] bg-[#f8faf7] shadow-2xl sm:h-[min(500px,78dvh)] sm:max-h-[78dvh]">
         <header className="flex shrink-0 items-center justify-between border-b border-[#e8eeea] bg-white px-4 py-2 sm:px-5">
           <div><div className="text-[10px] font-bold text-[#17645c]">Your appointments</div><h2 id="messages-title" className="mt-0.5 text-base font-bold text-[#17312e]">Messages</h2></div>
           <button type="button" onClick={() => setMessagesOpen(false)} aria-label="Close messages" className="rounded-full p-2 text-[#66736f] transition-colors hover:bg-[#f1f4f1]"><X className="h-5 w-5" /></button>
