@@ -202,7 +202,7 @@ export const UserAppointmentChat: React.FC = () => {
                   {selectedMessages.map((message) => (
                     <div key={message.id} className={`flex ${message.sender_role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-sm ${message.sender_role === 'user' ? 'rounded-br-sm bg-[#17645c] text-white' : 'rounded-bl-sm bg-[#edf1ee] text-[#17312e]'}`}><div className="whitespace-pre-line">{getDisplayMessage(message.message)}</div><div className={`mt-1 text-[10px] ${message.sender_role === 'user' ? 'text-white/70' : 'text-[#66736f]'}`}>{message.sender_name}</div></div></div>
                   ))}
-                  <p className="text-[11px] leading-relaxed text-[#66736f]">The automated website assistant answers using published health center information. Please do not include private or medical details. For appointment changes or questions needing confirmation, contact the health center directly.</p>
+                  <p className="text-[11px] leading-relaxed text-[#66736f]">Got your message! Thanks for reaching out. Our Pateros HealthConnect assistant will reply any minute with information based on published health center listings.</p>
                   {assistantLoading && <p role="status" className="text-xs text-[#66736f]">Website assistant is replying…</p>}
                 </div>
                 {selected.chat_status === 'open' ? (
