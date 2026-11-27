@@ -218,8 +218,8 @@ export const UserAppointmentChat: React.FC = () => {
                   {selectedMessages.map((message) => (
                     <div key={message.id} className={`flex ${message.sender_role === 'user' ? 'justify-end' : 'justify-start'}`}><div className={`max-w-[78%] rounded-2xl px-4 py-2.5 text-sm ${message.sender_role === 'user' ? 'rounded-br-sm bg-[#17645c] text-white' : 'rounded-bl-sm bg-[#edf1ee] text-[#17312e]'}`}><div className="whitespace-pre-line">{getDisplayMessage(message.message)}</div><div className={`mt-1 text-[10px] ${message.sender_role === 'user' ? 'text-white/70' : 'text-[#66736f]'}`}>{message.sender_name}</div></div></div>
                   ))}
-                  {composerMode === 'assistant' && <p className="text-[11px] leading-relaxed text-[#66736f]">Website questions are sent to Gemini using published health center information. Please do not include personal or medical details. For appointment changes, switch to clinic staff.</p>}
-                  {assistantLoading && <p role="status" className="text-xs text-[#66736f]">Website assistant is replying…</p>}
+                  {composerMode === 'assistant' && <p className="text-[11px] leading-relaxed text-[#66736f]">Automated answers use published health center information. Please do not include private or medical details. For appointment changes or questions without a confirmed answer, switch to clinic staff.</p>}
+                  {assistantLoading && <p role="status" className="text-xs text-[#66736f]">Automated assistant is replying…</p>}
                 </div>
                 {selected.chat_status === 'open' ? (
                   <div className="shrink-0 border-t border-[#dfe6e1] bg-white p-2.5 sm:p-3">
