@@ -96,7 +96,7 @@ const AppContent: React.FC = () => {
                 : 'Your appointment request is under review. This notice will update when clinic staff respond.')
               : (language === 'fil'
                 ? 'May kumpirmado kang appointment. Kumpletuhin o kanselahin muna ito bago humiling muli.'
-                : 'You have an accepted appointment. Complete or cancel it before requesting another.')}</p>
+                : 'You have an ACTIVE appointment. Complete or cancel it before requesting another.')}</p>
           </div>
         </div>
       )}

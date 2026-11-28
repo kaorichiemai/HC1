@@ -202,7 +202,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
                 {view === 'day' && <span className="text-xs text-[#66736f]">{events.length} appointment{events.length === 1 ? '' : 's'}{dateBlocked ? ' · blocked' : ''}</span>}
                 {view !== 'day' && (
                   <span className="mt-1 flex flex-col gap-0.5 text-[9px] font-semibold sm:text-[10px]">
-                    {confirmedCount > 0 && <span className="truncate text-emerald-800"><span className="sm:hidden" aria-label={`${confirmedCount} accepted`}>{confirmedCount}✓</span><span className="hidden sm:inline">{confirmedCount} accepted</span></span>}
+                    {confirmedCount > 0 && <span className="truncate text-emerald-800"><span className="sm:hidden" aria-label={`${confirmedCount} on going`}>{confirmedCount}✓</span><span className="hidden sm:inline">{confirmedCount} on going</span></span>}
                     {pendingCount > 0 && <span className="truncate text-amber-800"><span className="sm:hidden" aria-label={`${pendingCount} pending`}>{pendingCount}…</span><span className="hidden sm:inline">{pendingCount} pending</span></span>}
                     {dateBlocked && <span className="truncate text-rose-700"><span className="sm:hidden">Blocked</span><span className="hidden sm:inline">Blocked</span></span>}
                   </span>
@@ -212,7 +212,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
           })}
         </div>
         <div className="flex flex-wrap gap-4 border-t border-[#dfe6e1] px-4 py-3 text-[11px] text-[#66736f]">
-          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-600" />Accepted</span>
+          <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-emerald-600" />On Going</span>
           <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-amber-500" />Pending</span>
           <span className="flex items-center gap-1.5"><Ban className="h-3.5 w-3.5 text-rose-700" />Blocked date</span>
         </div>
@@ -227,7 +227,7 @@ export const AdminCalendar: React.FC<AdminCalendarProps> = ({
           <div className="max-h-[310px] divide-y divide-[#edf1ee] overflow-y-auto">
             {selectedAppointments.map((appointment) => (
               <button key={appointment.id} type="button" onClick={() => onSelectAppointment(appointment.id)} className="w-full px-4 py-3 text-left hover:bg-[#f6f9f6]">
-                <div className="flex items-center justify-between gap-2"><span className="truncate text-sm font-bold">{appointment.patient_name}</span><span className={`shrink-0 px-2 py-1 text-[9px] font-bold uppercase ${appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : appointment.status === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>{appointment.status}</span></div>
+                <div className="flex items-center justify-between gap-2"><span className="truncate text-sm font-bold">{appointment.patient_name}</span><span className={`shrink-0 px-2 py-1 text-[9px] font-bold uppercase ${appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : appointment.status === 'pending' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'}`}>{appointment.status === 'confirmed' ? 'ACTIVE' : appointment.status}</span></div>
                 <div className="mt-1 flex items-center gap-1 text-xs text-[#66736f]"><Clock3 className="h-3.5 w-3.5" />{formatAppointmentTime(appointment.preferred_time)} · {appointment.service_name}</div>
               </button>
             ))}

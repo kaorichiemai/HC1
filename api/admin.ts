@@ -294,7 +294,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
           args: [appointmentId, decoded.sub],
         });
         if (appointment.rows.length === 0) return response.status(404).json({ error: 'Appointment was not found.' });
-        return response.status(409).json({ error: 'Only pending or accepted appointments can be cancelled.' });
+        return response.status(409).json({ error: 'Only pending or ACTIVE appointments can be cancelled.' });
       }
       return response.status(200).json({ appointmentId, status: 'cancelled' });
     }
@@ -516,7 +516,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
             ? await db.execute({ sql: 'SELECT status FROM appointment_requests WHERE id = ?', args: [appointmentId] })
             : await db.execute({ sql: 'SELECT status FROM appointment_requests WHERE reference_code = ?', args: [referenceCode] });
           if (target.rows.length === 0) return response.status(404).json({ error: 'Appointment not found.' });
-          return response.status(409).json({ error: 'Only accepted appointments can be marked as missed.' });
+          return response.status(409).json({ error: 'Only ACTIVE appointments can be marked as missed.' });
         }
         await transaction.execute({
           sql: `INSERT INTO appointment_messages
@@ -597,7 +597,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
           ? await db.execute({ sql: 'SELECT status FROM appointment_requests WHERE id = ?', args: [appointmentId] })
           : await db.execute({ sql: 'SELECT status FROM appointment_requests WHERE reference_code = ?', args: [referenceCode] });
         if (target.rows.length === 0) return response.status(404).json({ error: 'Appointment not found.' });
-        return response.status(409).json({ error: 'Only accepted appointments can be marked completed.' });
+        return response.status(409).json({ error: 'Only ACTIVE appointments can be marked completed.' });
       }
       if (result.rowsAffected === 0) return response.status(404).json({ error: 'Appointment not found.' });
       if (action === 'approve') {
@@ -609,7 +609,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         if (appointment) {
           const now = new Date().toISOString();
           const appointmentTime = formatAppointmentTime(String(appointment.preferred_time));
-          const message = `Your appointment request for ${String(appointment.service_name)} on ${String(appointment.preferred_date)} at ${appointmentTime} has been accepted.\n\nYou may cancel it from Messages. To request a schedule change, reply in this conversation and clinic staff will assist you.\n\nKumpirmado na ang iyong appointment para sa ${String(appointment.service_name)} sa ${String(appointment.preferred_date)}, ${appointmentTime}. Maaari mo itong kanselahin sa Messages. Para humiling ng pagbabago sa iskedyul, mag-reply sa pag-uusap na ito.`;
+          const message = `Your appointment request for ${String(appointment.service_name)} on ${String(appointment.preferred_date)} at ${appointmentTime} is now ACTIVE.\n\nYou may cancel it from Messages. To request a schedule change, reply in this conversation and clinic staff will assist you.\n\nACTIVE na ang iyong appointment para sa ${String(appointment.service_name)} sa ${String(appointment.preferred_date)}, ${appointmentTime}. Maaari mo itong kanselahin sa Messages. Para humiling ng pagbabago sa iskedyul, mag-reply sa pag-uusap na ito.`;
           await db.batch([
             { sql: "UPDATE appointment_requests SET chat_status = 'open' WHERE id = ? OR reference_code = ?", args: [appointmentId, referenceCode] },
             {

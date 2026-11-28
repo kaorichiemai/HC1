@@ -116,7 +116,7 @@ export const AppointmentSchedule: React.FC = () => {
           )}
         </div>
 
-        {loading && <p className="border-y border-[#dce7e1] py-5 text-sm text-[#6b7280]">{isFilipino ? 'Nilo-load ang mga kumpirmadong appointment...' : 'Loading accepted appointments...'}</p>}
+        {loading && <p className="border-y border-[#dce7e1] py-5 text-sm text-[#6b7280]">{isFilipino ? 'Nilo-load ang mga ACTIVE na appointment...' : 'Loading ACTIVE appointments...'}</p>}
         {error && <p role="alert" className="border-y border-[#dce7e1] py-5 text-sm text-rose-800">{error}</p>}
 
         {!loading && !error && (

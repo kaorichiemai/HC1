@@ -387,7 +387,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
         await transaction.commit();
         return response.status(409).json({
           error: String(existing.status) === 'confirmed'
-            ? 'You already have an accepted appointment. Complete or cancel it before requesting another.'
+            ? 'You already have an active appointment. Complete or cancel it before requesting another.'
             : 'You already have an appointment request waiting for review.',
           activeAppointment: {
             referenceCode: String(existing.reference_code),
@@ -421,7 +421,7 @@ export default async function handler(request: ApiRequest, response: ApiResponse
       }
       const status = 'confirmed';
       const appointmentTime = formatAppointmentTime(preferredTime);
-      const message = `This is an automated message.\n\nYour appointment for ${serviceName} on ${preferredDate} at ${appointmentTime} has been automatically confirmed. You can view the schedule in your appointment chat.\n\nFilipino:\nAwtomatikong mensahe ito. Kumpirmado na ang iyong appointment para sa ${serviceName} sa ${preferredDate}, ganap na ${appointmentTime}. Maaari mong tingnan ang iskedyul sa chat ng iyong appointment.`;
+      const message = `This is an automated message.\n\nYour appointment for ${serviceName} on ${preferredDate} at ${appointmentTime} is now ACTIVE. You can view the schedule in your appointment chat.\n\nFilipino:\nAwtomatikong mensahe ito. ACTIVE na ang iyong appointment para sa ${serviceName} sa ${preferredDate}, ganap na ${appointmentTime}. Maaari mong tingnan ang iskedyul sa chat ng iyong appointment.`;
       await transaction.execute({
         sql: `INSERT INTO appointment_requests (
           id, owner_uid, reference_code, patient_name, phone, address, chief_complaint, age,

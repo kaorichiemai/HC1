@@ -253,7 +253,7 @@ export const AdminPanel: React.FC = () => {
         <section aria-label="Appointment summary" className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
           {[
             { label: 'Awaiting review', value: counts.pending, icon: Clock3, color: 'text-amber-800', bg: 'bg-amber-50', border: 'border-l-amber-400' },
-            { label: 'Accepted', value: counts.confirmed, icon: Check, color: 'text-emerald-800', bg: 'bg-emerald-50', border: 'border-l-emerald-500' },
+            { label: 'On Going', value: counts.confirmed, icon: Check, color: 'text-emerald-800', bg: 'bg-emerald-50', border: 'border-l-emerald-500' },
             { label: 'Completed', value: counts.completed, icon: CheckCircle2, color: 'text-sky-800', bg: 'bg-sky-50', border: 'border-l-sky-500' },
           ].map(({ label, value, icon: Icon, color, bg, border }) => (
             <div key={label} className={`flex min-w-0 items-center gap-2 border border-[#dce7e1] border-l-4 bg-white p-3 shadow-sm sm:gap-4 sm:p-4 ${border}`}>
@@ -312,7 +312,7 @@ export const AdminPanel: React.FC = () => {
                 <div className="mt-3 flex gap-1 overflow-x-auto pb-1">
                   {[
                     ['all', 'All'],
-                    ['confirmed', 'Accepted'],
+                    ['confirmed', 'On Going'],
                     ['history', 'Cancelled'],
                   ].map(([value, label]) => (
                     <button key={value} type="button" onClick={() => setStatusFilter(value)} className={`min-h-11 shrink-0 whitespace-nowrap px-3 text-xs font-bold ${statusFilter === value ? 'bg-[#173a37] text-white' : 'bg-[#f1f4f1] text-[#66736f] hover:bg-[#e7ede8]'}`}>{label}</button>
@@ -323,7 +323,7 @@ export const AdminPanel: React.FC = () => {
             <div className="max-h-[420px] overflow-y-auto lg:max-h-[calc(100vh-360px)]">
               {loading ? <p className="p-5 text-sm text-[#66736f]">Loading requests...</p> : displayedAppointments.map((appointment) => (
                 <button key={appointment.id} type="button" onClick={() => setSelectedId(appointment.id)} className={`w-full border-b border-[#edf1ee] border-l-2 px-4 py-4 text-left transition-colors hover:bg-[#f5f8f5] ${selectedId === appointment.id ? 'border-l-[#17645c] bg-[#f0f5f1]' : 'border-l-transparent'}`}>
-                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="truncate text-sm font-bold">{appointment.patient_name}</div><div className="mt-1 truncate text-xs text-[#66736f]">{appointment.service_name}</div></div><span className={`shrink-0 px-2 py-1 text-[10px] font-bold uppercase ${appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : appointment.status === 'completed' ? 'bg-sky-100 text-sky-800' : appointment.status === 'missed' || appointment.status === 'cancelled' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{appointment.status}</span></div>
+                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="truncate text-sm font-bold">{appointment.patient_name}</div><div className="mt-1 truncate text-xs text-[#66736f]">{appointment.service_name}</div></div><span className={`shrink-0 px-2 py-1 text-[10px] font-bold uppercase ${appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : appointment.status === 'completed' ? 'bg-sky-100 text-sky-800' : appointment.status === 'missed' || appointment.status === 'cancelled' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{appointment.status === 'confirmed' ? 'ACTIVE' : appointment.status}</span></div>
                   <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1 text-[11px] text-[#66736f]"><span>{appointment.preferred_date} · {formatAppointmentTime(appointment.preferred_time)}</span><span className="break-all font-mono">{appointment.reference_code}</span></div>
                   {getPriorityCategoryLabels(appointment.priority_categories ?? '').length > 0 && <div className="mt-2 text-[10px] font-semibold text-[#17645c]">{getPriorityCategoryLabels(appointment.priority_categories ?? '').join(' · ')}</div>}
                 </button>
@@ -343,7 +343,7 @@ export const AdminPanel: React.FC = () => {
               <div className="grid min-h-0 xl:min-h-[640px] xl:grid-cols-[minmax(230px,0.7fr)_minmax(320px,1.3fr)]">
                 <div className="min-w-0 border-b border-[#dfe6e1] bg-white p-4 sm:p-5 xl:border-b-0 xl:border-r">
                   <button type="button" onClick={() => setSelectedId('')} className="mb-4 flex items-center gap-1 text-xs font-bold text-[#17645c] lg:hidden"><ChevronLeft className="h-4 w-4" />Back to requests</button>
-                  <div className="flex items-start justify-between gap-3"><div><div className="text-[11px] font-bold uppercase tracking-wide text-[#17645c]">{['completed', 'missed', 'cancelled'].includes(selected.status) ? 'Appointment history' : 'Request details'}</div><div className="mt-1 font-mono text-xs text-[#66736f]">{selected.reference_code}</div></div><span className={`px-2 py-1 text-[10px] font-bold uppercase ${selected.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : selected.status === 'completed' ? 'bg-sky-100 text-sky-800' : selected.status === 'missed' || selected.status === 'cancelled' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{selected.status}</span></div>
+                  <div className="flex items-start justify-between gap-3"><div><div className="text-[11px] font-bold uppercase tracking-wide text-[#17645c]">{['completed', 'missed', 'cancelled'].includes(selected.status) ? 'Appointment history' : 'Request details'}</div><div className="mt-1 font-mono text-xs text-[#66736f]">{selected.reference_code}</div></div><span className={`px-2 py-1 text-[10px] font-bold uppercase ${selected.status === 'confirmed' ? 'bg-emerald-100 text-emerald-800' : selected.status === 'completed' ? 'bg-sky-100 text-sky-800' : selected.status === 'missed' || selected.status === 'cancelled' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'}`}>{selected.status === 'confirmed' ? 'ACTIVE' : selected.status}</span></div>
                   <h2 className="mt-5 break-words text-xl font-bold">{selected.patient_name}</h2>
                   <p className="mt-1 break-words text-sm text-[#66736f]">{selected.service_name}</p>
                   <dl className="mt-6 space-y-4 border-y border-[#edf1ee] py-5 text-sm">

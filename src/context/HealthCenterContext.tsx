@@ -400,7 +400,7 @@ export const HealthCenterProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setNotificationToast(
       language === 'fil'
         ? `Naitakda ang iskedyul: ${refCode}`
-        : `Appointment confirmed: ${refCode}`
+        : `Appointment ACTIVE: ${refCode}`
     );
     return newAppointment;
   };

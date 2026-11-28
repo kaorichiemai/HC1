@@ -449,7 +449,7 @@ export const OutreachBookingModal: React.FC = () => {
         <header className="flex items-start justify-between gap-3 border-b border-slate-200 px-4 py-3 sm:gap-5 sm:px-7 sm:py-5">
           <div>
             <div className="text-[11px] font-bold uppercase tracking-wider text-teal-800">Mayor Moises R. Flores Health Center</div>
-            <h2 id="appointment-title" className="mt-1 text-lg font-bold text-slate-950 sm:text-2xl">{receipt ? (receipt.status === 'confirmed' ? (isFilipino ? 'Kumpirmado ang appointment' : 'Appointment confirmed') : (isFilipino ? 'Natanggap ang request' : 'Request received')) : (isFilipino ? 'Online appointment request' : 'Request an appointment')}</h2>
+            <h2 id="appointment-title" className="mt-1 text-lg font-bold text-slate-950 sm:text-2xl">{receipt ? (receipt.status === 'confirmed' ? (isFilipino ? 'Aktibo ang appointment' : 'Appointment ACTIVE') : (isFilipino ? 'Natanggap ang request' : 'Request received')) : (isFilipino ? 'Online appointment request' : 'Request an appointment')}</h2>
             {!receipt && <p className="mt-1 text-xs leading-relaxed text-slate-600 sm:text-sm">{isFilipino ? 'Ilagay ang iyong detalye at napiling schedule.' : 'Enter your details and preferred schedule.'}</p>}
           </div>
           <button onClick={handleClose} aria-label="Close appointment form" className="p-2 text-slate-500 hover:text-slate-900"><X className="w-5 h-5" /></button>
@@ -461,10 +461,10 @@ export const OutreachBookingModal: React.FC = () => {
               <CheckCircle2 className="w-7 h-7 text-teal-800 shrink-0" />
               <div>
                 <h3 className="text-lg font-bold text-slate-950">{receipt.status === 'confirmed'
-                  ? (isFilipino ? 'Awtomatikong nakumpirma ang iyong appointment.' : 'Your appointment was automatically confirmed.')
+                  ? (isFilipino ? 'Awtomatikong naging ACTIVE ang iyong appointment.' : 'Your appointment was automatically marked ACTIVE.')
                   : (isFilipino ? 'Nakatala ang iyong appointment request.' : 'Your appointment request is recorded.')}</h3>
                 <p className="mt-2 text-sm text-slate-600">{receipt.status === 'confirmed'
-                  ? (isFilipino ? 'Nagpadala kami ng kumpirmasyon sa iyong appointment chat kasama ang napiling serbisyo, petsa, at oras.' : 'A confirmation with your selected service, date, and time is available in your appointment chat.')
+                  ? (isFilipino ? 'Nagpadala kami ng ACTIVE status sa iyong appointment chat kasama ang napiling serbisyo, petsa, at oras.' : 'An ACTIVE status with your selected service, date, and time is available in your appointment chat.')
                   : (isFilipino ? 'Naghihintay ito ng pagsusuri ng kawani dahil hindi ito awtomatikong makumpirma para sa napiling schedule. Makikita mo ang update sa appointment chat.' : 'It is waiting for staff review because it could not be automatically confirmed for the selected schedule. Updates will appear in your appointment chat.')}</p>
                 <p className="mt-4 text-sm text-slate-700">{selectedService?.title}</p>
                 <p className="mt-1 text-sm text-slate-600">{preferredDate} · {formatAppointmentTime(preferredTime)} · {zone}</p>
@@ -477,7 +477,7 @@ export const OutreachBookingModal: React.FC = () => {
           <div className="space-y-4 px-4 py-6 sm:px-7 sm:py-8" role="status" aria-live="polite">
             <div className="border border-amber-200 bg-amber-50 p-4 text-amber-950">
               <h3 className="text-base font-bold">{pendingRequest.status === 'confirmed'
-                ? (isFilipino ? 'May aktibo ka pang kumpirmadong appointment' : 'You already have an active accepted appointment')
+                ? (isFilipino ? 'May aktibo ka pang appointment' : 'You already have an active appointment')
                 : (isFilipino ? 'May request ka pang sinusuri' : 'You already have a request under review')}</h3>
               <p className="mt-2 text-sm leading-relaxed">
                 {pendingRequest.status === 'confirmed'

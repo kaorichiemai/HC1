@@ -8,7 +8,7 @@ export const ContactSection: React.FC = () => {
   const bookingLabel = appointmentRequestAvailability === 'pending'
     ? 'Appointment under review'
     : appointmentRequestAvailability === 'confirmed'
-      ? 'Accepted appointment active'
+      ? 'On Going appointment active'
     : appointmentRequestAvailability === 'checking'
       ? 'Checking request status'
       : appointmentRequestAvailability === 'error'
@@ -26,7 +26,7 @@ export const ContactSection: React.FC = () => {
             {t.contactTitle}
           </h2>
           <p className="mt-3 text-base text-slate-600">
-            {language === 'fil' ? 'Magpadala ng appointment request online anumang oras. Awtomatikong kinukumpirma ang mga request hanggang sa daily limit.' : 'Submit an appointment request online anytime. Requests are automatically confirmed up to the daily limit.'}
+            {language === 'fil' ? 'Magpadala ng appointment request online anumang oras. Awtomatikong nakikita bilang ACTIVE ang mga request hanggang sa daily limit.' : 'Submit an appointment request online anytime. Requests are automatically marked ACTIVE up to the daily limit.'}
           </p>
         </div>
 
@@ -35,7 +35,7 @@ export const ContactSection: React.FC = () => {
             <CalendarDays className="w-5 h-5 text-teal-800 shrink-0 mt-1" />
             <div>
               <h3 className="text-sm font-bold text-slate-900">Online appointment</h3>
-              <p className="mt-1 text-sm text-slate-600">Submit an online request anytime. Requests are automatically accepted up to the daily limit; additional requests are reviewed by staff.</p>
+              <p className="mt-1 text-sm text-slate-600">Submit an online request anytime. Requests are automatically marked ACTIVE up to the daily limit; additional requests are reviewed by staff.</p>
               <button disabled={!bookingEnabled} onClick={() => setBookingModalOpen(true)} className="mt-3 min-h-11 px-4 py-2.5 bg-teal-900 text-white text-sm font-bold rounded-md hover:bg-teal-950 disabled:cursor-not-allowed disabled:opacity-50">{bookingLabel}</button>
             </div>
           </div>

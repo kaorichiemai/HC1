@@ -251,8 +251,8 @@ function answerWebsiteQuestion(question: string, content: Awaited<ReturnType<typ
     }
     if (hasAnyTerm(normalizedQuestion, ['status', 'confirmed', 'accepted', 'pending', 'rejected', 'completed'])) {
       return isFilipino
-        ? `Makikita ang pinakabagong status sa appointment card at mensahe sa chat na ito. Ang “Confirmed” ay tinanggap na; ang “Pending” ay hinihintay pa ng pagsusuri. Para sa tulong, tumawag sa ${content.settings.contactPhone}.`
-        : `Check the appointment card and messages in this chat for the latest status. “Confirmed” means accepted; “Pending” means it is still under review. Call ${content.settings.contactPhone} if you need help.`;
+        ? `Makikita ang pinakabagong status sa appointment card at mensahe sa chat na ito. Ang “ACTIVE” ay kasalukuyang on-going; ang “Pending” ay hinihintay pa ng pagsusuri. Para sa tulong, tumawag sa ${content.settings.contactPhone}.`
+        : `Check the appointment card and messages in this chat for the latest status. “ACTIVE” means on going; “Pending” means it is still under review. Call ${content.settings.contactPhone} if you need help.`;
     }
     if (hasAnyTerm(normalizedQuestion, ['available', 'availability', 'open slot', 'free slot', 'bakante', 'available date'])) {
       return isFilipino

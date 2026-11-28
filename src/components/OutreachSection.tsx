@@ -18,7 +18,7 @@ export const OutreachSection: React.FC = () => {
   const bookingLabel = appointmentRequestAvailability === 'pending'
     ? 'Appointment under review'
     : appointmentRequestAvailability === 'confirmed'
-      ? 'Accepted appointment active'
+      ? 'On Going appointment active'
     : appointmentRequestAvailability === 'checking'
       ? 'Checking request status'
       : appointmentRequestAvailability === 'error'
@@ -164,7 +164,7 @@ export const OutreachSection: React.FC = () => {
                       <span className={`text-[11px] font-semibold px-2 py-0.5 rounded ${
                         apt.status === 'Confirmed' ? 'bg-teal-100 text-teal-800' : 'bg-slate-200 text-slate-700'
                       }`}>
-                        {apt.status}
+                        {apt.status === 'Confirmed' ? 'ACTIVE' : apt.status}
                       </span>
                     </div>
                   </div>

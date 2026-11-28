@@ -91,7 +91,7 @@ export const translations = {
     formTimeSlot: 'Time Slot',
     formNotes: 'Notes / Reason',
     btnSubmitBooking: 'Confirm Appointment',
-    bookingSuccessTitle: 'Appointment Confirmed',
+    bookingSuccessTitle: 'Appointment ACTIVE',
     bookingSuccessDesc: 'Your appointment pass has been saved.',
     labelRefCode: 'Reference Code',
     labelBringToClinic: 'Requirements to Bring',
